@@ -1,0 +1,6 @@
+framework module Pods_AITextViewSample {
+  umbrella header "Pods-AITextViewSample-umbrella.h"
+
+  export *
+  module * { export * }
+}

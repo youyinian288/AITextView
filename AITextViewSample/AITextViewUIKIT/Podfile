@@ -1,5 +1,5 @@
 use_frameworks!
 
-target 'RichEditorViewSample' do
-#	pod "RichEditorView", :path => "../"
+target 'AITextViewSample' do
+#	pod "AITextView", :path => "../"
 end
