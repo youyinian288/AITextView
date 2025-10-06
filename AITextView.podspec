@@ -11,9 +11,9 @@ Pod::Spec.new do |s|
   s.swift_version = '5.7'
   s.requires_arc = true
 
-  s.source_files = 'RichEditorView/Sources/*'
+  s.source_files = 'AITextView/Sources/*'
   s.resources = [
-      'RichEditorView/Sources/Resources/icons/*',
-      'RichEditorView/Sources/Resources/editor/*'
+      'AITextView/Sources/Resources/icons/*',
+      'AITextView/Sources/Resources/editor/*'
     ]
 end

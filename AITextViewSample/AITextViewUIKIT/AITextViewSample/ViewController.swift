@@ -7,16 +7,16 @@
 //
 
 import UIKit
-import RichEditorView
+import AITextView
 
 class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
-    var editorView: RichEditorView!
+    var editorView: AITextView!
     var htmlTextView: UITextView!
 
-    lazy var toolbar: RichEditorToolbar = {
-        let toolbar = RichEditorToolbar(frame: CGRect(x: 0, y: 0, width: self.view.bounds.width, height: 44))
-        toolbar.options = RichEditorDefaultOption.all
+    lazy var toolbar: AITextToolbar = {
+        let toolbar = AITextToolbar(frame: CGRect(x: 0, y: 0, width: self.view.bounds.width, height: 44))
+        toolbar.options = AITextDefaultOption.all
         return toolbar
     }()
 
@@ -29,7 +29,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     private func setupUI() {
         // 创建editorView
-        editorView = RichEditorView()
+        editorView = AITextView()
         editorView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(editorView)
         
@@ -161,11 +161,11 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
 }
 
-extension ViewController: RichEditorDelegate {
+extension ViewController: AITextDelegate {
 
-    func richEditor(_ editor: RichEditorView, heightDidChange height: Int) { }
+    func aiText(_ editor: AITextView, heightDidChange height: Int) { }
 
-    func richEditor(_ editor: RichEditorView, contentDidChange content: String) {
+    func aiText(_ editor: AITextView, contentDidChange content: String) {
         if content.isEmpty {
             htmlTextView.text = "HTML Preview"
         } else {
@@ -173,19 +173,19 @@ extension ViewController: RichEditorDelegate {
         }
     }
 
-    func richEditorTookFocus(_ editor: RichEditorView) { }
+    func aiTextTookFocus(_ editor: AITextView) { }
     
-    func richEditorLostFocus(_ editor: RichEditorView) { }
+    func aiTextLostFocus(_ editor: AITextView) { }
     
-    func richEditorDidLoad(_ editor: RichEditorView) { }
+    func aiTextDidLoad(_ editor: AITextView) { }
     
-    func richEditor(_ editor: RichEditorView, shouldInteractWith url: URL) -> Bool { return true }
+    func aiText(_ editor: AITextView, shouldInteractWith url: URL) -> Bool { return true }
 
-    func richEditor(_ editor: RichEditorView, handleCustomAction content: String) { }
+    func aiText(_ editor: AITextView, handleCustomAction content: String) { }
     
 }
 
-extension ViewController: RichEditorToolbarDelegate {
+extension ViewController: AITextToolbarDelegate {
 
     fileprivate func randomColor() -> UIColor {
         let colors = [
@@ -201,17 +201,17 @@ extension ViewController: RichEditorToolbarDelegate {
         return color
     }
 
-    func richEditorToolbarChangeTextColor(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarChangeTextColor(_ toolbar: AITextToolbar) {
         let color = randomColor()
         toolbar.editor?.setTextColor(color)
     }
 
-    func richEditorToolbarChangeBackgroundColor(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarChangeBackgroundColor(_ toolbar: AITextToolbar) {
         let color = randomColor()
         toolbar.editor?.setTextBackgroundColor(color)
     }
 
-    func richEditorToolbarInsertImage(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarInsertImage(_ toolbar: AITextToolbar) {
         let alertController = UIAlertController(title: "选择图片", message: nil, preferredStyle: .actionSheet)
         
         // 从相册选择
@@ -240,10 +240,10 @@ extension ViewController: RichEditorToolbarDelegate {
         present(alertController, animated: true)
     }
 
-    func richEditorToolbarInsertLink(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarInsertLink(_ toolbar: AITextToolbar) {
         // Can only add links to selected text, so make sure there is a range selection first
 //       if let hasSelection = toolbar.editor?.rangeSelectionExists(), hasSelection {
-//           toolbar.editor?.insertLink("http://github.com/cjwirth/RichEditorView", title: "Github Link")
+//           toolbar.editor?.insertLink("http://github.com/cjwirth/AITextView", title: "Github Link")
 //       }
     }
 }

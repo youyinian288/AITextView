@@ -18,13 +18,13 @@ let package = Package(
         .target(
             name: "AITextView",
             dependencies: [],
-            path: "RichEditorView/Sources",
+            path: "AITextView/Sources",
             resources: [.process("Resources")]
         ),
         .testTarget(
             name: "AITextViewTests",
             dependencies: ["AITextView"],
-            path: "RichEditorViewTests"
+            path: "AITextViewTests"
         ),
     ],
     swiftLanguageVersions: [.v5]
