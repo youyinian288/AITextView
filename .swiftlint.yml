@@ -1,0 +1,177 @@
+# SwiftLint 配置文件
+# 详细配置说明: https://github.com/realm/SwiftLint
+
+# 包含的规则路径
+included:
+  - RichEditorView/Sources
+  - RichEditorViewSample
+  - RichEditorViewTests
+
+# 排除的路径
+excluded:
+  - RichEditorViewSample/RichEditorViewUIKIT/Pods
+  - RichEditorView/Sources/Resources
+  - .build
+
+# 禁用的规则
+disabled_rules:
+  - trailing_whitespace # 允许尾随空格
+  - line_length # 暂时禁用行长度检查
+
+# 可选规则 (默认禁用的规则，但我们想启用)
+opt_in_rules:
+  - array_init
+  - attributes
+  - closure_body_length
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - contains_over_range_nil_comparison
+  - discouraged_object_literal
+  - empty_collection_literal
+  - empty_count
+  - empty_string
+  - enum_case_associated_values_count
+  - explicit_init
+  - extension_access_modifier
+  - fallthrough
+  - fatal_error_message
+  - file_header
+  - file_name
+  - first_where
+  - force_unwrapping
+  - ibinspectable_in_extension
+  - identical_operands
+  - joined_default_parameter
+  - last_where
+  - legacy_random
+  - literal_expression_end_indentation
+  - lower_acl_than_parent
+  - modifier_order
+  - nimble_operator
+  - nslocalizedstring_key
+  - number_separator
+  - object_literal
+  - operator_usage_whitespace
+  - overridden_super_call
+  - override_in_extension
+  - pattern_matching_keywords
+  - prefer_self_type_over_type_of_self
+  - prefer_zero_over_explicit_init
+  - prefixed_toplevel_constant
+  - prohibited_interface_builder
+  - prohibited_super_call
+  - quick_discouraged_call
+  - quick_discouraged_focused_test
+  - quick_discouraged_pending_test
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - required_enum_case
+  - single_test_class
+  - sorted_first_last
+  - sorted_imports
+  - static_operator
+  - strong_iboutlet
+  - toggle_bool
+  - trailing_closure
+  - unavailable_function
+  - unneeded_parentheses_in_closure_argument
+  - unowned_variable_capture
+  - unused_declaration
+  - unused_import
+  - vertical_parameter_alignment_on_call
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - yoda_condition
+
+# 自定义规则配置
+line_length:
+  warning: 120
+  error: 140
+  ignores_function_declarations: true
+  ignores_comments: true
+  ignores_urls: true
+
+type_body_length:
+  warning: 300
+  error: 400
+
+function_body_length:
+  warning: 50
+  error: 80
+
+function_parameter_count:
+  warning: 6
+  error: 8
+
+cyclomatic_complexity:
+  warning: 10
+  error: 20
+
+file_length:
+  warning: 400
+  error: 500
+  ignore_comment_only_lines: true
+
+type_name:
+  min_length: 3
+  max_length:
+    warning: 40
+    error: 50
+  excluded:
+    - T
+    - id
+
+identifier_name:
+  min_length: 2
+  max_length:
+    warning: 40
+    error: 50
+  excluded:
+    - id
+    - to
+    - x
+    - y
+    - z
+
+# 自定义规则
+custom_rules:
+  # 避免使用 print
+  no_print:
+    name: "避免使用 print"
+    regex: '(?<!//\s*)(?<!print\(")print\s*\('
+    match_kinds:
+      - identifier
+    message: "避免在发布版本中使用 print，请使用适当的日志框架"
+    severity: warning
+
+  # 确保 TODO 和 FIXME 有相关信息
+  todo_fixme_format:
+    name: "TODO/FIXME 格式"
+    regex: '(?i)(TODO|FIXME)(?!:|\s+\w+:)'
+    message: "TODO 和 FIXME 应该包含相关信息，例如: // TODO: 添加错误处理"
+    severity: warning
+
+  # 避免空的 catch 块
+  no_empty_catch:
+    name: "避免空的 catch 块"
+    regex: 'catch\s*\{\s*\}'
+    message: "避免空的 catch 块，至少应该记录错误或者有注释说明为什么忽略"
+    severity: error
+
+# 文件头配置
+file_header:
+  required_pattern: |
+                    \/\/
+                    \/\/  .*\.swift
+                    \/\/  RichEditorView
+                    \/\/
+                    \/\/  Created by .* on \d{1,2}\/\d{1,2}\/\d{2,4}\.
+                    \/\/.*
+                    \/\/
+
+# 报告设置
+reporter: "xcode"

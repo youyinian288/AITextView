@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1400" height="900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .title { font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; fill: #333; }
+      .participant { font-family: Arial, sans-serif; font-size: 12px; fill: #666; }
+      .arrow { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .arrow-return { stroke: #666; stroke-width: 1; fill: none; stroke-dasharray: 5,5; marker-end: url(#arrowhead); }
+      .note { font-family: Arial, sans-serif; font-size: 11px; fill: #333; }
+      .box { fill: #f0f0f0; stroke: #ccc; stroke-width: 1; }
+      .lifeline { stroke: #999; stroke-width: 1; }
+      .phase { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; fill: #2c5aa0; }
+      .data-flow { font-family: Arial, sans-serif; font-size: 10px; fill: #e65100; }
+      .swiftui { fill: #e3f2fd; stroke: #1976d2; }
+      .uikit { fill: #f3e5f5; stroke: #4a148c; }
+      .javascript { fill: #fff3e0; stroke: #ff9800; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+  </defs>
+  
+  <!-- 标题 -->
+  <text x="700" y="30" text-anchor="middle" class="title">RichEditorView 数据流转时序图</text>
+  
+  <!-- 参与者 -->
+  <g id="participants">
+    <!-- SwiftUI层 -->
+    <rect x="50" y="60" width="120" height="30" class="swiftui" />
+    <text x="110" y="80" text-anchor="middle" class="participant">SwiftUI View</text>
+    
+    <rect x="200" y="60" width="120" height="30" class="swiftui" />
+    <text x="260" y="80" text-anchor="middle" class="participant">RichEditorState</text>
+    
+    <!-- UIKit层 -->
+    <rect x="350" y="60" width="120" height="30" class="uikit" />
+    <text x="410" y="80" text-anchor="middle" class="participant">RichEditorView</text>
+    
+    <rect x="500" y="60" width="120" height="30" class="uikit" />
+    <text x="560" y="80" text-anchor="middle" class="participant">RichEditorToolbar</text>
+    
+    <!-- WebView层 -->
+    <rect x="650" y="60" width="120" height="30" class="uikit" />
+    <text x="710" y="80" text-anchor="middle" class="participant">RichEditorWebView</text>
+    
+    <!-- JavaScript层 -->
+    <rect x="800" y="60" width="120" height="30" class="javascript" />
+    <text x="860" y="80" text-anchor="middle" class="participant">JavaScript</text>
+    
+    <!-- HTML DOM层 -->
+    <rect x="950" y="60" width="120" height="30" class="javascript" />
+    <text x="1010" y="80" text-anchor="middle" class="participant">HTML DOM</text>
+    
+    <!-- 用户层 -->
+    <rect x="1100" y="60" width="120" height="30" class="box" />
+    <text x="1160" y="80" text-anchor="middle" class="participant">用户操作</text>
+  </g>
+  
+  <!-- 生命线 -->
+  <g id="lifelines">
+    <line x1="110" y1="90" x2="110" y2="850" class="lifeline" />
+    <line x1="260" y1="90" x2="260" y2="850" class="lifeline" />
+    <line x1="410" y1="90" x2="410" y2="850" class="lifeline" />
+    <line x1="560" y1="90" x2="560" y2="850" class="lifeline" />
+    <line x1="710" y1="90" x2="710" y2="850" class="lifeline" />
+    <line x1="860" y1="90" x2="860" y2="850" class="lifeline" />
+    <line x1="1010" y1="90" x2="1010" y2="850" class="lifeline" />
+    <line x1="1160" y1="90" x2="1160" y2="850" class="lifeline" />
+  </g>
+  
+  <!-- 阶段1: 初始化数据流 -->
+  <g id="phase1">
+    <rect x="20" y="120" width="1360" height="25" fill="#e8f5e8" stroke="#388e3c" stroke-width="1" />
+    <text x="30" y="138" class="phase">1. 初始化阶段 - 数据向下流动</text>
+    
+    <!-- 用户创建编辑器 -->
+    <line x1="1160" y1="160" x2="110" y2="160" class="arrow" />
+    <text x="635" y="155" class="note">用户创建 SwiftUIRichEditor</text>
+    
+    <!-- 初始化状态 -->
+    <line x1="110" y1="180" x2="260" y2="180" class="arrow" />
+    <text x="185" y="175" class="note">初始化 RichEditorState</text>
+    
+    <!-- 创建编辑器 -->
+    <line x1="110" y1="200" x2="410" y2="200" class="arrow" />
+    <text x="260" y="195" class="note">创建 RichEditorView</text>
+    
+    <!-- 创建工具栏 -->
+    <line x1="110" y1="220" x2="560" y2="220" class="arrow" />
+    <text x="335" y="215" class="note">创建 RichEditorToolbar</text>
+    
+    <!-- 创建WebView -->
+    <line x1="410" y1="240" x2="710" y2="240" class="arrow" />
+    <text x="560" y="235" class="note">创建 RichEditorWebView</text>
+    
+    <!-- 加载HTML -->
+    <line x1="710" y1="260" x2="1010" y2="260" class="arrow" />
+    <text x="860" y="255" class="note">加载 rich_editor.html</text>
+    
+    <!-- 设置初始内容 -->
+    <line x1="260" y1="280" x2="410" y2="280" class="arrow" />
+    <text x="335" y="275" class="note">设置初始 HTML 内容</text>
+    
+    <!-- 执行JavaScript初始化 -->
+    <line x1="410" y1="300" x2="860" y2="300" class="arrow" />
+    <text x="635" y="295" class="note">执行 JavaScript 初始化</text>
+    
+    <!-- 设置HTML到DOM -->
+    <line x1="860" y1="320" x2="1010" y2="320" class="arrow" />
+    <text x="935" y="315" class="note">设置 HTML 到 DOM</text>
+  </g>
+  
+  <!-- 阶段2: 用户输入数据流 -->
+  <g id="phase2">
+    <rect x="20" y="360" width="1360" height="25" fill="#fff3e0" stroke="#f57c00" stroke-width="1" />
+    <text x="30" y="378" class="phase">2. 用户输入阶段 - 数据向上流动</text>
+    
+    <!-- 用户输入文本 -->
+    <line x1="1160" y1="400" x2="1010" y2="400" class="arrow" />
+    <text x="1085" y="395" class="note">用户输入文本</text>
+    
+    <!-- DOM内容变化 -->
+    <rect x="990" y="410" width="40" height="20" fill="#fff3e0" stroke="#ff9800" stroke-width="1" />
+    <text x="1010" y="425" text-anchor="middle" class="note">DOM 变化</text>
+    
+    <!-- 触发input事件 -->
+    <line x1="1010" y1="440" x2="860" y2="440" class="arrow" />
+    <text x="935" y="435" class="note">触发 input 事件</text>
+    
+    <!-- JavaScript处理 -->
+    <rect x="840" y="450" width="40" height="20" fill="#fff3e0" stroke="#ff9800" stroke-width="1" />
+    <text x="860" y="465" text-anchor="middle" class="note">处理</text>
+    
+    <!-- 添加到回调队列 -->
+    <line x1="860" y1="480" x2="860" y2="480" class="arrow" />
+    <text x="870" y="475" class="note">添加到回调队列</text>
+    
+    <!-- 触发回调URL -->
+    <line x1="860" y1="500" x2="710" y2="500" class="arrow" />
+    <text x="785" y="495" class="note">触发 re-callback://</text>
+    
+    <!-- WebView拦截回调 -->
+    <rect x="690" y="510" width="40" height="20" fill="#f3e5f5" stroke="#4a148c" stroke-width="1" />
+    <text x="710" y="525" text-anchor="middle" class="note">拦截</text>
+    
+    <!-- 获取命令队列 -->
+    <line x1="710" y1="540" x2="860" y2="540" class="arrow" />
+    <text x="785" y="535" class="note">获取命令队列</text>
+    
+    <!-- 返回JSON命令 -->
+    <line x1="860" y1="560" x2="710" y2="560" class="arrow-return" />
+    <text x="785" y="555" class="note">返回 JSON 命令</text>
+    
+    <!-- 执行命令 -->
+    <rect x="690" y="570" width="40" height="20" fill="#f3e5f5" stroke="#4a148c" stroke-width="1" />
+    <text x="710" y="585" text-anchor="middle" class="note">执行</text>
+    
+    <!-- 获取最新HTML -->
+    <line x1="710" y1="600" x2="860" y2="600" class="arrow" />
+    <text x="785" y="595" class="note">获取最新 HTML</text>
+    
+    <!-- 返回HTML内容 -->
+    <line x1="860" y1="620" x2="710" y2="620" class="arrow-return" />
+    <text x="785" y="615" class="note">返回 HTML 内容</text>
+    
+    <!-- 更新contentHTML -->
+    <line x1="710" y1="640" x2="410" y2="640" class="arrow" />
+    <text x="560" y="635" class="note">更新 contentHTML</text>
+    
+    <!-- 调用代理方法 -->
+    <line x1="410" y1="660" x2="260" y2="660" class="arrow" />
+    <text x="335" y="655" class="note">调用代理方法</text>
+    
+    <!-- 更新状态 -->
+    <line x1="260" y1="680" x2="110" y2="680" class="arrow" />
+    <text x="185" y="675" class="note">更新 @Published 状态</text>
+    
+    <!-- UI自动更新 -->
+    <rect x="90" y="690" width="40" height="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="1" />
+    <text x="110" y="705" text-anchor="middle" class="note">UI更新</text>
+  </g>
+  
+  <!-- 阶段3: 工具栏操作数据流 -->
+  <g id="phase3">
+    <rect x="20" y="720" width="1360" height="25" fill="#e1f5fe" stroke="#0277bd" stroke-width="1" />
+    <text x="30" y="738" class="phase">3. 工具栏操作阶段 - 双向数据流</text>
+    
+    <!-- 用户点击工具栏 -->
+    <line x1="1160" y1="760" x2="560" y2="760" class="arrow" />
+    <text x="860" y="755" class="note">用户点击工具栏按钮</text>
+    
+    <!-- 工具栏处理 -->
+    <rect x="540" y="770" width="40" height="20" fill="#f3e5f5" stroke="#4a148c" stroke-width="1" />
+    <text x="560" y="785" text-anchor="middle" class="note">处理</text>
+    
+    <!-- 调用编辑器方法 -->
+    <line x1="560" y1="800" x2="410" y2="800" class="arrow" />
+    <text x="485" y="795" class="note">调用编辑器方法</text>
+    
+    <!-- 执行JavaScript -->
+    <line x1="410" y1="820" x2="860" y2="820" class="arrow" />
+    <text x="635" y="815" class="note">执行 JavaScript 命令</text>
+    
+    <!-- JavaScript处理格式 -->
+    <rect x="840" y="830" width="40" height="20" fill="#fff3e0" stroke="#ff9800" stroke-width="1" />
+    <text x="860" y="845" text-anchor="middle" class="note">格式化</text>
+    
+    <!-- 更新DOM -->
+    <line x1="860" y1="860" x2="1010" y2="860" class="arrow" />
+    <text x="935" y="855" class="note">更新 DOM</text>
+    
+    <!-- 触发回调 -->
+    <line x1="1010" y1="880" x2="710" y2="880" class="arrow-return" />
+    <text x="860" y="875" class="note">触发回调</text>
+    
+    <!-- 返回结果 -->
+    <line x1="710" y1="900" x2="410" y2="900" class="arrow-return" />
+    <text x="560" y="895" class="note">返回结果</text>
+    
+    <!-- 更新UI状态 -->
+    <line x1="410" y1="920" x2="260" y2="920" class="arrow" />
+    <text x="335" y="915" class="note">更新状态</text>
+  </g>
+  
+  <!-- 数据流说明 -->
+  <g id="data-flow-legend">
+    <rect x="50" y="960" width="400" height="100" fill="#f5f5f5" stroke="#ccc" stroke-width="1" />
+    <text x="60" y="980" class="title">数据流转说明</text>
+    
+    <line x1="60" y1="990" x2="100" y2="990" class="arrow" />
+    <text x="110" y="995" class="data-flow">同步调用</text>
+    
+    <line x1="60" y1="1010" x2="100" y2="1010" class="arrow-return" />
+    <text x="110" y="1015" class="data-flow">异步回调</text>
+    
+    <rect x="60" y="1020" width="20" height="15" fill="#fff3e0" stroke="#ff9800" stroke-width="1" />
+    <text x="90" y="1032" class="data-flow">JavaScript处理</text>
+    
+    <rect x="60" y="1040" width="20" height="15" fill="#f3e5f5" stroke="#4a148c" stroke-width="1" />
+    <text x="90" y="1052" class="data-flow">UIKit处理</text>
+    
+    <text x="60" y="1070" class="data-flow">关键机制: 回调URL (re-callback://) + 命令队列 + 代理模式</text>
+  </g>
+</svg>
+
+
+

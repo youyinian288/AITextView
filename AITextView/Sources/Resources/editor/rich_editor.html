@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- 设置视口，禁止用户缩放 -->
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+        <!-- 支持明暗模式 -->
+        <meta name="supported-color-schemes" content="light dark">
+        <!-- 设置内容类型和字符编码 -->
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <!-- 引入normalize.css重置浏览器默认样式 -->
+        <link rel="stylesheet" type="text/css" href="normalize.css">
+        <!-- 引入自定义样式 -->
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    
+    <body>
+        <!-- 容器div -->
+        <div id="container">
+            <!-- 编辑器div，可编辑，有占位符 -->
+            <div id="editor" contentEditable="true" placeholder="" class="placeholder"></div>
+        </div>
+        
+        <!-- 引入富编辑器的JavaScript代码 -->
+        <script type="text/javascript" src="rich_editor.js"></script>
+    </body>
+</html>

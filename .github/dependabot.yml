@@ -1,0 +1,53 @@
+# GitHub Dependabot 配置
+# 文档: https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  # Swift Package Manager 依赖更新
+  - package-ecosystem: "swift"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 5
+    # assignees:
+    #   - "maintainer-username"  # 请替换为实际的GitHub用户名
+    # reviewers:
+    #   - "team-reviewers"       # 请替换为实际的团队或用户名
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+
+  # GitHub Actions 工作流依赖更新  
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 3
+    # assignees:
+    #   - "maintainer-username"  # 请替换为实际的GitHub用户名
+    # reviewers:
+    #   - "team-reviewers"       # 请替换为实际的团队或用户名
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # CocoaPods 依赖更新 (如果有Podfile)
+  - package-ecosystem: "bundler"
+    directory: "/RichEditorViewSample/RichEditorViewUIKIT"
+    schedule:
+      interval: "monthly"
+      day: "monday" 
+      time: "09:00"
+      timezone: "Asia/Shanghai"
+    open-pull-requests-limit: 2
+    # assignees:
+    #   - "maintainer-username"  # 请替换为实际的GitHub用户名
+    commit-message:
+      prefix: "deps"
+      include: "scope"

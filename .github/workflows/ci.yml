@@ -1,0 +1,283 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  spm-build:
+    name: Swift Package Manager Build
+    runs-on: macos-14  # 使用更稳定的macOS版本
+    strategy:
+      matrix:
+        ios: ['17.5', '16.4']
+        include:
+          - ios: '17.5'
+            device: 'iPhone 15 Pro'
+            xcode: '15.4'
+          - ios: '16.4'
+            device: 'iPhone 14 Pro'
+            xcode: '15.2'
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 缓存Swift Package Manager
+      uses: actions/cache@v4
+      with:
+        path: |
+          .build
+          ~/Library/Caches/org.swift.swiftpm
+        key: ${{ runner.os }}-spm-${{ matrix.ios }}-${{ hashFiles('Package.swift', 'Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-${{ matrix.ios }}-
+          ${{ runner.os }}-spm-
+      
+    - name: 选择Xcode版本
+      run: |
+        # 尝试使用指定版本的Xcode，如果不存在则使用默认版本
+        XCODE_PATH="/Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer"
+        if [ -d "$XCODE_PATH" ]; then
+          sudo xcode-select -s "$XCODE_PATH"
+          echo "✅ 使用 Xcode ${{ matrix.xcode }}"
+        else
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          echo "⚠️ 使用默认 Xcode 版本"
+        fi
+      
+    - name: 显示Xcode版本
+      run: xcodebuild -version
+      
+    - name: 验证Swift Package Manager构建
+      run: |
+        swift build
+        swift test
+        
+    - name: 检查包结构
+      run: swift package describe --type json
+
+  framework-build:
+    name: Framework Build & Test
+    runs-on: macos-14
+    strategy:
+      matrix:
+        destination: 
+          - 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5'
+          - 'platform=iOS Simulator,name=iPhone 14 Pro,OS=16.4'
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 缓存Xcode DerivedData
+      uses: actions/cache@v4
+      with:
+        path: ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-xcode-deriveddata-${{ hashFiles('**/*.xcodeproj/project.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-xcode-deriveddata-
+      
+    - name: 选择Xcode版本
+      run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      
+    - name: 构建框架
+      run: |
+        xcodebuild clean build \
+          -project RichEditorView.xcodeproj \
+          -scheme RichEditorView \
+          -destination "${{ matrix.destination }}" \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          ONLY_ACTIVE_ARCH=NO
+          
+    - name: 运行单元测试
+      run: |
+        xcodebuild test \
+          -project RichEditorView.xcodeproj \
+          -scheme RichEditorView \
+          -destination "${{ matrix.destination }}" \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+
+  sample-app-build:
+    name: Sample App Build
+    runs-on: macos-14
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 选择Xcode版本
+      run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      
+    - name: 构建SwiftUI示例应用
+      run: |
+        xcodebuild clean build \
+          -project RichEditorViewSample/RichEditorViewSwiftUI/RichEditorViewSwiftUI.xcodeproj \
+          -scheme RichEditorViewSwiftUI \
+          -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5" \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+          
+    - name: 构建UIKit示例应用
+      run: |
+        cd RichEditorViewSample/RichEditorViewUIKIT
+        xcodebuild clean build \
+          -workspace RichEditorViewSample.xcworkspace \
+          -scheme RichEditorViewSample \
+          -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5" \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+
+  cocoapods-validation:
+    name: CocoaPods Validation
+    runs-on: macos-14
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 设置Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.0'
+        bundler-cache: true  # 自动缓存gem依赖
+        
+    - name: 缓存CocoaPods
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cocoapods/repos
+          ~/Library/Caches/CocoaPods
+        key: ${{ runner.os }}-cocoapods-${{ hashFiles('RichEditorView.podspec') }}
+        restore-keys: |
+          ${{ runner.os }}-cocoapods-
+        
+    - name: 安装CocoaPods
+      run: gem install cocoapods
+      
+    - name: 验证Podspec
+      run: pod lib lint RichEditorView.podspec --allow-warnings --skip-import-validation
+      
+    - name: 检查Podspec语法
+      run: pod spec lint RichEditorView.podspec --allow-warnings --skip-import-validation
+
+  code-quality:
+    name: Code Quality Checks
+    runs-on: macos-14
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 选择Xcode版本
+      run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      
+    - name: 缓存Homebrew
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/Library/Caches/Homebrew
+          /usr/local/Homebrew
+        key: ${{ runner.os }}-brew-swiftlint
+        restore-keys: |
+          ${{ runner.os }}-brew-
+      
+    - name: 安装SwiftLint
+      run: |
+        brew install swiftlint
+        
+    - name: 运行SwiftLint
+      run: |
+        swiftlint lint --reporter github-actions-logging
+        
+    - name: 检查代码格式
+      run: |
+        swiftlint lint --strict --reporter github-actions-logging || true
+
+  security-scan:
+    name: Security Scan
+    runs-on: macos-14
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 运行CodeQL分析
+      uses: github/codeql-action/init@v3
+      with:
+        languages: swift
+        
+    - name: 执行CodeQL分析
+      uses: github/codeql-action/analyze@v3
+
+  documentation-check:
+    name: Documentation Check
+    runs-on: macos-14
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 检查README文件
+      run: |
+        if [ ! -f README.md ]; then
+          echo "❌ README.md 不存在"
+          exit 1
+        fi
+        echo "✅ README.md 存在"
+        
+    - name: 检查许可证文件
+      run: |
+        if [ ! -f LICENSE.md ]; then
+          echo "❌ LICENSE.md 不存在"
+          exit 1
+        fi
+        echo "✅ LICENSE.md 存在"
+        
+    - name: 验证包清单
+      run: |
+        if [ ! -f Package.swift ]; then
+          echo "❌ Package.swift 不存在"
+          exit 1
+        fi
+        echo "✅ Package.swift 存在"
+
+  release-readiness:
+    name: Release Readiness Check
+    runs-on: macos-14
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    needs: [spm-build, framework-build, sample-app-build, cocoapods-validation, code-quality]
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 检查版本一致性
+      run: |
+        # 从Package.swift获取版本（如果有的话）
+        # 从Podspec获取版本
+        PODSPEC_VERSION=$(grep 's.version' RichEditorView.podspec | sed 's/.*= "\(.*\)"/\1/')
+        echo "Podspec版本: $PODSPEC_VERSION"
+        
+        # 检查是否有版本标签
+        if git tag -l | grep -q "^$PODSPEC_VERSION$"; then
+          echo "✅ 版本标签 $PODSPEC_VERSION 已存在"
+        else
+          echo "⚠️ 版本标签 $PODSPEC_VERSION 不存在"
+        fi
+        
+    - name: 生成发布报告
+      run: |
+        echo "## 🚀 发布就绪性报告" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Swift Package Manager 构建通过" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ 框架构建和测试通过" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ 示例应用构建通过" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ CocoaPods 验证通过" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ 代码质量检查通过" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🎉 **项目已准备好发布!**" >> $GITHUB_STEP_SUMMARY

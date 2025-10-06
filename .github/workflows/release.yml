@@ -1,0 +1,228 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+-*'
+
+jobs:
+  validate-tag:
+    name: 验证发布标签
+    runs-on: macos-14
+    
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      is_prerelease: ${{ steps.check_prerelease.outputs.is_prerelease }}
+      
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 获取版本号
+      id: get_version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "发布版本: $VERSION"
+        
+    - name: 检查是否为预发布版本
+      id: check_prerelease
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        if [[ $VERSION =~ -[a-zA-Z] ]]; then
+          echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          echo "这是一个预发布版本"
+        else
+          echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          echo "这是一个正式发布版本"
+        fi
+        
+    - name: 验证Podspec版本
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        PODSPEC_VERSION=$(grep 's.version' RichEditorView.podspec | sed 's/.*= "\(.*\)"/\1/')
+        
+        if [ "$VERSION" != "$PODSPEC_VERSION" ]; then
+          echo "❌ 标签版本 ($VERSION) 与 Podspec 版本 ($PODSPEC_VERSION) 不匹配"
+          exit 1
+        fi
+        echo "✅ 版本验证通过: $VERSION"
+
+  build-and-test:
+    name: 构建和测试
+    runs-on: macos-14
+    needs: validate-tag
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 选择Xcode版本
+      run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      
+    - name: 运行完整测试套件
+      run: |
+        # Swift Package Manager 构建
+        swift build
+        swift test
+        
+        # 框架构建和测试
+        xcodebuild clean test \
+          -project RichEditorView.xcodeproj \
+          -scheme RichEditorView \
+          -destination "platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5" \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO
+        
+    - name: 构建发布档案
+      run: |
+        # 创建 XCFramework
+        xcodebuild archive \
+          -project RichEditorView.xcodeproj \
+          -scheme RichEditorView \
+          -destination "generic/platform=iOS" \
+          -archivePath "build/RichEditorView-iOS.xcarchive" \
+          SKIP_INSTALL=NO \
+          BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+          
+        xcodebuild archive \
+          -project RichEditorView.xcodeproj \
+          -scheme RichEditorView \
+          -destination "generic/platform=iOS Simulator" \
+          -archivePath "build/RichEditorView-iOS-Simulator.xcarchive" \
+          SKIP_INSTALL=NO \
+          BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+          
+        xcodebuild -create-xcframework \
+          -framework "build/RichEditorView-iOS.xcarchive/Products/Library/Frameworks/RichEditorView.framework" \
+          -framework "build/RichEditorView-iOS-Simulator.xcarchive/Products/Library/Frameworks/RichEditorView.framework" \
+          -output "build/RichEditorView.xcframework"
+          
+        # 压缩 XCFramework
+        cd build
+        zip -r RichEditorView-${{ needs.validate-tag.outputs.version }}.xcframework.zip RichEditorView.xcframework
+        
+    - name: 上传构建产物
+      uses: actions/upload-artifact@v4
+      with:
+        name: RichEditorView-${{ needs.validate-tag.outputs.version }}
+        path: build/RichEditorView-${{ needs.validate-tag.outputs.version }}.xcframework.zip
+
+  deploy-cocoapods:
+    name: 发布到CocoaPods
+    runs-on: macos-14
+    needs: [validate-tag, build-and-test]
+    if: needs.validate-tag.outputs.is_prerelease == 'false'
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      
+    - name: 设置Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.0'
+        
+    - name: 安装CocoaPods
+      run: gem install cocoapods
+      
+    - name: 验证Podspec
+      run: pod lib lint RichEditorView.podspec --allow-warnings
+      
+    - name: 发布到CocoaPods
+      env:
+        COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+      run: |
+        if [ -n "$COCOAPODS_TRUNK_TOKEN" ]; then
+          pod trunk push RichEditorView.podspec --allow-warnings
+          echo "✅ 成功发布到CocoaPods"
+        else
+          echo "⚠️ 未设置 COCOAPODS_TRUNK_TOKEN，跳过CocoaPods发布"
+        fi
+
+  create-release:
+    name: 创建GitHub发布
+    runs-on: macos-14
+    needs: [validate-tag, build-and-test]
+    
+    steps:
+    - name: 检出代码
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: 下载构建产物
+      uses: actions/download-artifact@v4
+      with:
+        name: RichEditorView-${{ needs.validate-tag.outputs.version }}
+        path: artifacts/
+        
+    - name: 生成变更日志
+      id: changelog
+      run: |
+        # 获取上一个标签
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^)
+        
+        echo "## 🚀 发布内容" > CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### ✨ 新功能和改进" >> CHANGELOG.md
+        git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD --grep="feat\|add\|new" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### 🐛 问题修复" >> CHANGELOG.md
+        git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD --grep="fix\|bug" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### 📝 其他变更" >> CHANGELOG.md
+        git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD --invert-grep --grep="feat\|add\|new\|fix\|bug" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "### 📦 安装方式" >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "#### Swift Package Manager" >> CHANGELOG.md
+        echo '```swift' >> CHANGELOG.md
+        echo '.package(url: "https://github.com/T-Pro/RichEditorView", from: "${{ needs.validate-tag.outputs.version }}")' >> CHANGELOG.md
+        echo '```' >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "#### CocoaPods" >> CHANGELOG.md
+        echo '```ruby' >> CHANGELOG.md
+        echo 'pod "RichEditorView", "~> ${{ needs.validate-tag.outputs.version }}"' >> CHANGELOG.md
+        echo '```' >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        echo "完整更新日志: [查看所有变更](https://github.com/T-Pro/RichEditorView/compare/$PREVIOUS_TAG...${{ needs.validate-tag.outputs.version }})" >> CHANGELOG.md
+        
+    - name: 创建GitHub发布
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ needs.validate-tag.outputs.version }}
+        name: "RichEditorView ${{ needs.validate-tag.outputs.version }}"
+        body_path: CHANGELOG.md
+        prerelease: ${{ needs.validate-tag.outputs.is_prerelease == 'true' }}
+        files: |
+          artifacts/RichEditorView-${{ needs.validate-tag.outputs.version }}.xcframework.zip
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-success:
+    name: 发布成功通知
+    runs-on: macos-14
+    needs: [validate-tag, build-and-test, create-release]
+    if: always() && needs.build-and-test.result == 'success'
+    
+    steps:
+    - name: 发布成功摘要
+      run: |
+        echo "## 🎉 发布成功! " >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**版本:** ${{ needs.validate-tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "**类型:** ${{ needs.validate-tag.outputs.is_prerelease == 'true' && '预发布版本' || '正式版本' }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ 完成的任务:" >> $GITHUB_STEP_SUMMARY
+        echo "- 构建和测试通过" >> $GITHUB_STEP_SUMMARY
+        echo "- 创建 XCFramework" >> $GITHUB_STEP_SUMMARY
+        echo "- 创建 GitHub 发布" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ needs.validate-tag.outputs.is_prerelease }}" == "false" ]; then
+          echo "- 发布到 CocoaPods" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🚀 **RichEditorView ${{ needs.validate-tag.outputs.version }} 已成功发布!**" >> $GITHUB_STEP_SUMMARY
