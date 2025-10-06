@@ -1,5 +1,0 @@
-use_frameworks!
-
-target 'AITextViewSample' do
-#	pod "AITextView", :path => "../"
-end

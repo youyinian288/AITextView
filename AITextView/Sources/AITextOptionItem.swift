@@ -246,8 +246,8 @@ public enum AITextDefaultOption: AITextOption {
         case .superscript: toolbar.editor?.superscript()                                          // 设置上标
         case .strike: toolbar.editor?.strikethrough()                                             // 设置删除线
         case .underline: toolbar.editor?.underline()                                              // 设置下划线
-        case .textColor: toolbar.delegate?.richEditorToolbarChangeTextColor?(toolbar)             // 改变文字颜色（需要代理处理）
-        case .textBackgroundColor: toolbar.delegate?.richEditorToolbarChangeBackgroundColor?(toolbar) // 改变背景颜色（需要代理处理）
+        case .textColor: toolbar.delegate?.aiTextToolbarChangeTextColor?(toolbar)             // 改变文字颜色（需要代理处理）
+        case .textBackgroundColor: toolbar.delegate?.aiTextToolbarChangeBackgroundColor?(toolbar) // 改变背景颜色（需要代理处理）
         case .header(let h): toolbar.editor?.header(h)                                            // 设置标题级别
         case .indent: toolbar.editor?.indent()                                                    // 增加缩进
         case .outdent: toolbar.editor?.outdent()                                                  // 减少缩进
@@ -256,8 +256,8 @@ public enum AITextDefaultOption: AITextOption {
         case .alignLeft: toolbar.editor?.alignLeft()                                              // 左对齐
         case .alignCenter: toolbar.editor?.alignCenter()                                          // 居中对齐
         case .alignRight: toolbar.editor?.alignRight()                                            // 右对齐
-        case .image: toolbar.delegate?.richEditorToolbarInsertImage?(toolbar)                     // 插入图片（需要代理处理）
-        case .link: toolbar.delegate?.richEditorToolbarInsertLink?(toolbar)                       // 插入链接（需要代理处理）
+        case .image: toolbar.delegate?.aiTextToolbarInsertImage?(toolbar)                     // 插入图片（需要代理处理）
+        case .link: toolbar.delegate?.aiTextToolbarInsertLink?(toolbar)                       // 插入链接（需要代理处理）
         }
     }
 }

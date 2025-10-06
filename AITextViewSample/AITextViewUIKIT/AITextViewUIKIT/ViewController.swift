@@ -161,11 +161,11 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
 }
 
-extension ViewController: AITextDelegate {
+extension ViewController: AITextViewDelegate {
 
-    func aiText(_ editor: AITextView, heightDidChange height: Int) { }
+    func aiTextView(_ editor: AITextView, heightDidChange height: Int) { }
 
-    func aiText(_ editor: AITextView, contentDidChange content: String) {
+    func aiTextView(_ editor: AITextView, contentDidChange content: String) {
         if content.isEmpty {
             htmlTextView.text = "HTML Preview"
         } else {
@@ -173,15 +173,15 @@ extension ViewController: AITextDelegate {
         }
     }
 
-    func aiTextTookFocus(_ editor: AITextView) { }
+    func aiTextViewTookFocus(_ editor: AITextView) { }
     
-    func aiTextLostFocus(_ editor: AITextView) { }
+    func aiTextViewLostFocus(_ editor: AITextView) { }
     
-    func aiTextDidLoad(_ editor: AITextView) { }
+    func aiTextViewDidLoad(_ editor: AITextView) { }
     
-    func aiText(_ editor: AITextView, shouldInteractWith url: URL) -> Bool { return true }
+    func aiTextView(_ editor: AITextView, shouldInteractWith url: URL) -> Bool { return true }
 
-    func aiText(_ editor: AITextView, handleCustomAction content: String) { }
+    func aiTextView(_ editor: AITextView, handle action: String) { }
     
 }
 
@@ -243,7 +243,7 @@ extension ViewController: AITextToolbarDelegate {
     func aiTextToolbarInsertLink(_ toolbar: AITextToolbar) {
         // Can only add links to selected text, so make sure there is a range selection first
 //       if let hasSelection = toolbar.editor?.rangeSelectionExists(), hasSelection {
-//           toolbar.editor?.insertLink("http://github.com/cjwirth/AITextView", title: "Github Link")
+//           toolbar.editor?.insertLink("http://github.com/cjwirth/RichEditorView", title: "Github Link")
 //       }
     }
 }
