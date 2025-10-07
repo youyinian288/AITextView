@@ -1,33 +1,34 @@
 //
-//  RichEditorToolbarTests.swift
-//  RichEditorViewTests
+//  AITextToolbarTests.swift
+//  AITextViewUIKITTests
 //
-//  Created by CI/CD Enhancement on 2024.
+//  Created by yunning you on 2025/10/7.
 //
 
 import UIKit
 import XCTest
-@testable import RichEditorView
+import AITextView
+@testable import AITextViewUIKIT
 
-class RichEditorToolbarTests: XCTestCase {
+class AITextToolbarTests: XCTestCase {
     
-    var toolbar: RichEditorToolbar!
-    var richEditor: RichEditorView!
+    var toolbar: AITextToolbar!
+    var editorView: AITextView!
     var mockDelegate: MockToolbarDelegate!
     
     override func setUp() {
         super.setUp()
-        toolbar = RichEditorToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
-        richEditor = RichEditorView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))
+        toolbar = AITextToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+        editorView = AITextView(frame: CGRect(x: 0, y: 0, width: 320, height: 200))
         mockDelegate = MockToolbarDelegate()
         
-        toolbar.editor = richEditor
+        toolbar.editor = editorView
         toolbar.delegate = mockDelegate
     }
     
     override func tearDown() {
         toolbar = nil
-        richEditor = nil
+        editorView = nil
         mockDelegate = nil
         super.tearDown()
     }
@@ -35,14 +36,14 @@ class RichEditorToolbarTests: XCTestCase {
     // MARK: - 基础初始化测试
     
     func testToolbarInitialization() {
-        XCTAssertNotNil(toolbar, "RichEditorToolbar应该能够成功初始化")
+        XCTAssertNotNil(toolbar, "AITextToolbar应该能够成功初始化")
         XCTAssertEqual(toolbar.frame.size, CGSize(width: 320, height: 44), "工具栏应该有正确的frame大小")
         XCTAssertEqual(toolbar.options.count, 0, "默认选项数组应该为空")
     }
     
     func testEditorAssignment() {
         XCTAssertNotNil(toolbar.editor, "编辑器应该正确关联")
-        XCTAssertTrue(toolbar.editor === richEditor, "编辑器引用应该正确")
+        XCTAssertTrue(toolbar.editor === editorView, "编辑器引用应该正确")
     }
     
     func testDelegateAssignment() {
@@ -63,7 +64,7 @@ class RichEditorToolbarTests: XCTestCase {
     }
     
     func testMultipleOptions() {
-        let options: [RichEditorOption] = [
+        let options: [AITextOption] = [
             AITextDefaultOption.bold,
             AITextDefaultOption.italic,
             AITextDefaultOption.underline
@@ -138,7 +139,7 @@ class RichEditorToolbarTests: XCTestCase {
         let customTitle = "自定义选项"
         var actionCalled = false
         
-        let customOption = RichEditorOptionItem(image: customImage, title: customTitle) { _ in
+        let customOption = AITextOptionItem(image: customImage, title: customTitle) { _ in
             actionCalled = true
         }
         
@@ -152,7 +153,7 @@ class RichEditorToolbarTests: XCTestCase {
     
     func testCustomOptionWithoutImage() {
         let customTitle = "无图标选项"
-        let customOption = RichEditorOptionItem(image: nil, title: customTitle) { _ in }
+        let customOption = AITextOptionItem(image: nil, title: customTitle) { _ in }
         
         XCTAssertNil(customOption.image, "自定义选项应该可以没有图标")
         XCTAssertEqual(customOption.title, customTitle, "无图标选项标题应该正确")
@@ -208,7 +209,7 @@ class RichEditorToolbarTests: XCTestCase {
     
     func testToolbarInitializationPerformance() {
         self.measure {
-            let testToolbar = RichEditorToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
+            let testToolbar = AITextToolbar(frame: CGRect(x: 0, y: 0, width: 320, height: 44))
             testToolbar.options = AITextDefaultOption.all
         }
     }
@@ -222,9 +223,9 @@ class RichEditorToolbarTests: XCTestCase {
     // MARK: - 边界测试
     
     func testLargeNumberOfOptions() {
-        var manyOptions: [RichEditorOption] = []
+        var manyOptions: [AITextOption] = []
         for i in 1...100 {
-            let option = RichEditorOptionItem(image: nil, title: "选项\(i)") { _ in }
+            let option = AITextOptionItem(image: nil, title: "选项\(i)") { _ in }
             manyOptions.append(option)
         }
         
@@ -243,31 +244,31 @@ class RichEditorToolbarTests: XCTestCase {
 
 // MARK: - Mock Toolbar Delegate
 
-class MockToolbarDelegate: NSObject, RichEditorToolbarDelegate {
+class MockToolbarDelegate: NSObject, AITextToolbarDelegate {
     var textColorChangeCalled = false
     var backgroundColorChangeCalled = false
     var imageInsertCalled = false
     var linkInsertCalled = false
     
-    func richEditorToolbarChangeTextColor(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarChangeTextColor(_ toolbar: AITextToolbar) {
         textColorChangeCalled = true
         // 模拟选择颜色
         toolbar.editor?.setTextColor(.red)
     }
     
-    func richEditorToolbarChangeBackgroundColor(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarChangeBackgroundColor(_ toolbar: AITextToolbar) {
         backgroundColorChangeCalled = true
         // 模拟选择背景颜色
         toolbar.editor?.setTextBackgroundColor(.yellow)
     }
     
-    func richEditorToolbarInsertImage(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarInsertImage(_ toolbar: AITextToolbar) {
         imageInsertCalled = true
         // 模拟插入图片
         toolbar.editor?.insertImage("test-image.png", alt: "测试图片")
     }
     
-    func richEditorToolbarInsertLink(_ toolbar: RichEditorToolbar) {
+    func aiTextToolbarInsertLink(_ toolbar: AITextToolbar) {
         linkInsertCalled = true
         // 模拟插入链接
         toolbar.editor?.insertLink("https://example.com", title: "示例链接")

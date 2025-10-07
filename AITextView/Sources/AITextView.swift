@@ -622,6 +622,15 @@ private let DefaultInnerLineHeight: Int = 21
                 // 2. 处理各种成功的结果类型
                 if let resultInt = result as? Int {
                     continuation.resume(returning: "\(resultInt)")
+                } else if let resultDouble = result as? Double {
+                    // 处理浮点数，包括 NaN 和无穷大
+                    if resultDouble.isNaN {
+                        continuation.resume(returning: "0") // NaN 转换为 0
+                    } else if resultDouble.isInfinite {
+                        continuation.resume(returning: "0") // 无穷大转换为 0
+                    } else {
+                        continuation.resume(returning: "\(Int(resultDouble.rounded()))") // 四舍五入为整数
+                    }
                 } else if let resultBool = result as? Bool {
                     continuation.resume(returning: resultBool ? "true" : "false")
                 } else if let resultStr = result as? String {
