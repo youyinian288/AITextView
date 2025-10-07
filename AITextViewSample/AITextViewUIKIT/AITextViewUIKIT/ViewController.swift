@@ -150,6 +150,19 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         <p>查看 <a href="https://www.apple.com">Apple 官网</a> 了解更多信息</p>
         <p>这是一个 <a href="mailto:test@example.com">邮箱链接</a> 和 <a href="tel:+1234567890">电话链接</a></p>
         
+        <h2>🖼️ 图片测试</h2>
+        <p>网络图片示例：</p>
+        <img src="https://picsum.photos/200/150?random=1" alt="随机网络图片" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;">
+        
+        <p>Base64 图片示例（小图标）：</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzQyODVmNCIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5CYXNlNjQgSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==" alt="Base64 SVG 图片" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;">
+        
+        <p>Base64 图片示例（彩色渐变）：</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmY2YjY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjNGZjM2Y0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzQyODVmNCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIj5HcmFkaWVudCBJbWFnZTwvdGV4dD4KPC9zdmc+" alt="Base64 渐变图片" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;">
+        
+        <p>Base64 图片示例（简单几何图形）：</p>
+        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjEyNSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1MCIgZmlsbD0iI2ZmNjI2MiIvPgogIDxyZWN0IHg9IjEwMCIgeT0iMjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzQyODVmNCIvPgogIDxwb2x5Z29uIHBvaW50cz0iMjAwLDIwIDI0MCw2MCAyMDAsMTAwIDE2MCw2MCIgZmlsbD0iI2ZmYzEwNyIvPgogIDx0ZXh0IHg9IjEyNSIgeT0iMTEwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0Ij5TaGFwZXM8L3RleHQ+Cjwvc3ZnPg==" alt="Base64 几何图形" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;">
+        
         <h2>💬 引用和特殊格式</h2>
         <blockquote>
             <p>"这是一个引用块，用于突出显示重要内容或引用他人的话语。"</p>
@@ -219,9 +232,25 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             <li>列表和缩进</li>
             <li>对齐方式</li>
             <li>链接插入</li>
-            <li>图片插入</li>
+            <li>图片插入（网络图片、Base64图片）</li>
             <li>撤销重做</li>
             <li>键盘工具栏</li>
+        </ul>
+        
+        <h3>📸 图片插入功能说明</h3>
+        <p><strong>支持的图片格式：</strong></p>
+        <ul>
+            <li>🌐 <strong>网络图片</strong>：通过URL直接插入在线图片</li>
+            <li>📱 <strong>本地图片</strong>：从相册选择，自动转换为Base64格式</li>
+            <li>🔧 <strong>Base64图片</strong>：直接插入Base64编码的图片数据</li>
+        </ul>
+        
+        <p><strong>Base64图片优势：</strong></p>
+        <ul>
+            <li>✅ 无需网络连接，离线可用</li>
+            <li>✅ 图片数据直接嵌入HTML，便于分享</li>
+            <li>✅ 支持SVG矢量图形，缩放不失真</li>
+            <li>✅ 适合小图标、简单图形等场景</li>
         </ul>
         
         <p style="text-align: center; color: #666; font-style: italic;">
