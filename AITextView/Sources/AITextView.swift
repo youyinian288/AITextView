@@ -587,6 +587,16 @@ private let DefaultInnerLineHeight: Int = 21
         }
     }
     
+    // MARK: - Async/Await 版本
+    @available(iOS 13.0, *)
+    public func runJS(_ js: String) async -> String {
+        return await withCheckedContinuation { continuation in
+            runJS(js) { result in
+                continuation.resume(returning: result)
+            }
+        }
+    }
+    
     // MARK: - 代理方法
     // MARK: - Delegate Methods
     
@@ -711,6 +721,29 @@ private let DefaultInnerLineHeight: Int = 21
         }
     }
     
+    // MARK: - Async/Await 版本的辅助函数
+    @available(iOS 13.0, *)
+    private func getLineHeight() async -> Int {
+        if isEditorLoaded {
+            let result = await runJS("RE.getLineHeight()")
+            return Int(result) ?? DefaultInnerLineHeight
+        } else {
+            return DefaultInnerLineHeight
+        }
+    }
+    
+    @available(iOS 13.0, *)
+    private func getClientHeight() async -> Int {
+        let result = await runJS("document.getElementById('editor').clientHeight")
+        return Int(result) ?? 0
+    }
+    
+    @available(iOS 13.0, *)
+    private func relativeCaretYPosition() async -> Int {
+        let result = await runJS("RE.getRelativeCaretYPosition()")
+        return Int(result) ?? 0
+    }
+    
     // 更新编辑器高度
     private func updateHeight() {
         // 执行 JavaScript 获取编辑器 div 的 clientHeight
@@ -778,6 +811,72 @@ private let DefaultInnerLineHeight: Int = 21
         })
     }
     
+    /// Scrolls the editor to a position where the caret is visible (Async/Await version).
+    /// Called repeatedly to make sure the caret is always visible when inputting text.
+    /// Works only if the `lineHeight` of the editor is available.
+    /// 
+    /// Usage example:
+    /// ```swift
+    /// Task {
+    ///     await scrollCaretToVisible()
+    /// }
+    /// ```
+    // 滚动编辑器，确保光标可见 (Async/Await 版本)
+    @available(iOS 13.0, *)
+    private func scrollCaretToVisible() async {
+        // 获取 webView 的 scrollView
+        let scrollView = self.webView.scrollView
+        
+        // 获取编辑器客户端高度
+        let clientHeight = await getClientHeight()
+        // 计算内容高度
+        let contentHeight = clientHeight > 0 ? CGFloat(clientHeight) : scrollView.frame.height
+        // 设置 scrollView 的 contentSize
+        scrollView.contentSize = CGSize(width: scrollView.frame.width, height: contentHeight)
+        
+        // XXX: Maybe find a better way to get the cursor height
+        // 获取行高
+        let lineHeightInt = await getLineHeight()
+        // 计算光标高度
+        let lineHeight = CGFloat(lineHeightInt)
+        let cursorHeight = lineHeight - 4
+        
+        // 获取光标相对位置
+        let relativePosition = await relativeCaretYPosition()
+        // 可见位置
+        let visiblePosition = CGFloat(relativePosition)
+        // 定义一个可选的偏移量
+        var offset: CGPoint?
+        
+        // 如果光标在可见区域下方
+        if visiblePosition + cursorHeight > scrollView.bounds.size.height {
+            // Visible caret position goes further than our bounds
+            // 计算新的偏移量，使光标滚动到可见区域
+            offset = CGPoint(x: 0, y: (visiblePosition + lineHeight) - scrollView.bounds.height + scrollView.contentOffset.y)
+        // 如果光标在可见区域上方
+        } else if visiblePosition < 0 {
+            // Visible caret position is above what is currently visible
+            // 计算新的偏移量
+            var amount = scrollView.contentOffset.y + visiblePosition
+            // 确保偏移量不小于 0
+            amount = amount < 0 ? 0 : amount
+            offset = CGPoint(x: scrollView.contentOffset.x, y: amount)
+        }
+        
+        // 如果计算出了新的偏移量
+        if let offset = offset {
+            // 带动画地设置 scrollView 的 contentOffset
+            scrollView.setContentOffset(offset, animated: true)
+        }
+    }
+    
+    /// Public async version of scrollCaretToVisible for external use
+    /// 公开的异步版本，供外部调用
+    @available(iOS 13.0, *)
+    public func scrollCaretToVisibleAsync() async {
+        await scrollCaretToVisible()
+    }
+    
     /// Called when actions are received from JavaScript
     /// - parameter method: String with the name of the method and optional parameters that were passed in
     // 执行从 JavaScript 收到的命令
@@ -809,7 +908,13 @@ private let DefaultInnerLineHeight: Int = 21
         // 如果命令以 "input" 开头
         else if method.hasPrefix("input") {
             // 滚动以确保光标可见
-            scrollCaretToVisible()
+            if #available(iOS 13.0, *) {
+                Task {
+                    await scrollCaretToVisible()
+                }
+            } else {
+                scrollCaretToVisible()
+            }
             // 获取最新的 HTML 内容
             runJS("RE.getHtml()") { content in
                 // 更新 contentHTML
