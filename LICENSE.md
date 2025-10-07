@@ -36,6 +36,8 @@ JavaScript 执行 → RE.setBold() 调用 document.execCommand('bold', false, nu
 触发 input 事件 → JavaScript 中的 input 事件监听器被触发
 回调到 Swift → 通过 RE.callback("input") 回调到 Swift
 经过 performCommand → 在 performCommand 方法中处理 input 命令
+
+
 背景色功能的数据流：
 用户点击背景色按钮 → 触发 aiTextToolbarChangeBackgroundColor 代理方法
 生成随机颜色 → 调用 randomColor() 生成颜色

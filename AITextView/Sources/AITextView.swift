@@ -9,6 +9,24 @@
 import UIKit
 // 导入 WebKit 框架，用于在应用中显示网页内容
 import WebKit
+
+/// JavaScript 执行错误类型
+public enum JSError: Error, CustomStringConvertible {
+    case javaScriptError(Error)
+    case unexpectedResult(Any?)
+    case noResult
+
+    public var description: String {
+        switch self {
+        case .javaScriptError(let error):
+            return "JavaScript execution failed: \(error.localizedDescription)"
+        case .unexpectedResult(let result):
+            return "Received an unexpected result type: \(String(describing: result))"
+        case .noResult:
+            return "JavaScript returned no result (null or undefined)."
+        }
+    }
+}
     
 /// 在JS完全加载之前，我们保存的行高值
 // 定义一个私有常量，作为默认的行高，值为 21
@@ -589,10 +607,32 @@ private let DefaultInnerLineHeight: Int = 21
     
     // MARK: - Async/Await 版本
     @available(iOS 13.0, *)
-    public func runJS(_ js: String) async -> String {
-        return await withCheckedContinuation { continuation in
-            runJS(js) { result in
-                continuation.resume(returning: result)
+    @MainActor // 确保在主线程调用，因为 WKWebView 只能在主线程操作
+    public func runJS(_ js: String) async throws -> String {
+        // 使用 withCheckedThrowingContinuation 包装闭包回调
+        return try await withCheckedThrowingContinuation { continuation in
+            webView.evaluateJavaScript(js) { (result, error) in
+                // 1. 处理错误
+                if let error = error {
+                    // 如果 JS 执行出错，就抛出自定义错误
+                    continuation.resume(throwing: JSError.javaScriptError(error))
+                    return
+                }
+
+                // 2. 处理各种成功的结果类型
+                if let resultInt = result as? Int {
+                    continuation.resume(returning: "\(resultInt)")
+                } else if let resultBool = result as? Bool {
+                    continuation.resume(returning: resultBool ? "true" : "false")
+                } else if let resultStr = result as? String {
+                    continuation.resume(returning: resultStr)
+                } else if result == nil { // 明确处理 JS 的 null 或 undefined
+                    continuation.resume(returning: "")
+                } else {
+                    // 如果是其他无法处理的类型，可以返回空字符串或抛出错误
+                    // 这里我们选择抛出一个更具体的错误
+                    continuation.resume(throwing: JSError.unexpectedResult(result))
+                }
             }
         }
     }
@@ -725,8 +765,13 @@ private let DefaultInnerLineHeight: Int = 21
     @available(iOS 13.0, *)
     private func getLineHeight() async -> Int {
         if isEditorLoaded {
-            let result = await runJS("RE.getLineHeight()")
-            return Int(result) ?? DefaultInnerLineHeight
+            do {
+                let result = try await runJS("RE.getLineHeight()")
+                return Int(result) ?? DefaultInnerLineHeight
+            } catch {
+                print("Error getting line height: \(error)")
+                return DefaultInnerLineHeight
+            }
         } else {
             return DefaultInnerLineHeight
         }
@@ -734,14 +779,24 @@ private let DefaultInnerLineHeight: Int = 21
     
     @available(iOS 13.0, *)
     private func getClientHeight() async -> Int {
-        let result = await runJS("document.getElementById('editor').clientHeight")
-        return Int(result) ?? 0
+        do {
+            let result = try await runJS("document.getElementById('editor').clientHeight")
+            return Int(result) ?? 0
+        } catch {
+            print("Error getting client height: \(error)")
+            return 0
+        }
     }
     
     @available(iOS 13.0, *)
     private func relativeCaretYPosition() async -> Int {
-        let result = await runJS("RE.getRelativeCaretYPosition()")
-        return Int(result) ?? 0
+        do {
+            let result = try await runJS("RE.getRelativeCaretYPosition()")
+            return Int(result) ?? 0
+        } catch {
+            print("Error getting relative caret position: \(error)")
+            return 0
+        }
     }
     
     // 更新编辑器高度
