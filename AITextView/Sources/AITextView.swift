@@ -941,6 +941,36 @@ private let DefaultInnerLineHeight: Int = 21
         await scrollCaretToVisible()
     }
     
+    /// 滚动到编辑器底部（用于AI内容生成时）
+    /// - Parameter animated: 是否使用动画滚动，默认为true
+    public func scrollToBottom(animated: Bool = true) {
+        runJS("document.getElementById('editor').scrollHeight") { scrollHeight in
+            let height = Int(scrollHeight) ?? 0
+            let scrollView = self.webView.scrollView
+            let maxOffsetY = max(0, CGFloat(height) - scrollView.bounds.height)
+            
+            let offset = CGPoint(x: 0, y: maxOffsetY)
+            scrollView.setContentOffset(offset, animated: animated)
+        }
+    }
+    
+    /// 滚动到编辑器底部的异步版本
+    /// - Parameter animated: 是否使用动画滚动，默认为true
+    @available(iOS 13.0, *)
+    public func scrollToBottomAsync(animated: Bool = true) async {
+        do {
+            let scrollHeight = try await runJS("document.getElementById('editor').scrollHeight")
+            let height = Int(scrollHeight) ?? 0
+            let scrollView = self.webView.scrollView
+            let maxOffsetY = max(0, CGFloat(height) - scrollView.bounds.height)
+            
+            let offset = CGPoint(x: 0, y: maxOffsetY)
+            scrollView.setContentOffset(offset, animated: animated)
+        } catch {
+            print("Error scrolling to bottom: \(error)")
+        }
+    }
+    
     /// Called when actions are received from JavaScript
     /// - parameter method: String with the name of the method and optional parameters that were passed in
     // 执行从 JavaScript 收到的命令

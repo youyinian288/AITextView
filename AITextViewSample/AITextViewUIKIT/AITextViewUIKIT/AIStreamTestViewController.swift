@@ -3251,6 +3251,12 @@ class AIStreamTestViewController: UIViewController {
         }
         
         editorView.html = htmlContent
+        
+        // 自动滚动到底部，确保新内容可见
+        // 延迟一点时间确保内容已渲染完成
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.editorView.scrollToBottom(animated: true)
+        }
     }
     
     private func clearContent() {
