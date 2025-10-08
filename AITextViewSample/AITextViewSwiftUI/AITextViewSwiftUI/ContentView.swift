@@ -1486,59 +1486,18 @@ struct ContentView: View {
     private let toolbarOptions: [AITextDefaultOption] = AITextDefaultOption.all
         
     var body: some View {
-        VStack(spacing: 0) {
-            // Toolbar section wrapped in VStack
+        GeometryReader { geometry in
             VStack(spacing: 0) {
-                SwiftUIAITextToolbar(
-                    options: toolbarOptions,
-                    barTintColor: .systemBackground,
-                    editor: editorState.editor,
-                    onTextColorChange: {
-                        // Show text color picker
-                        showTextColorPicker = true
-                    },
-                    onBackgroundColorChange: {
-                        // Show background color picker
-                        showBackgroundColorPicker = true
-                    },
-                    onImageInsert: {
-                        // Handle image insertion
-                        print("Image insertion")
-                    },
-                    onLinkInsert: {
-                        // Handle link insertion
-                        print("Link insertion")
-                    }
-                )
-                .frame(height: 44)
-                .background(
-                    Rectangle()
-                        .fill(Color(.systemBackground))
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color(.separator), lineWidth: 1)
-                        )
-                )
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .zIndex(1) // Ensure toolbar is always on top
-            
-            // Divider between toolbar and editor
-            Divider()
-                .padding(.horizontal, 16)
-            
-            // Editor section wrapped in VStack
-            VStack(spacing: 0) {
+                // 上半部分：编辑器
                 SwiftUIAITextView(
                     htmlContent: $editorState.htmlContent,
                     isEditing: $editorState.isEditing,
-                    placeholder: "Enter content...",
+                    placeholder: "Edit here",
                     isScrollEnabled: true,
                     editingEnabled: true,
-                    backgroundColor: .systemGray6,
-                    showsKeyboardToolbar: true, // Enable keyboard toolbar
-                    keyboardToolbarDoneButtonText: "Done", // Custom button text
+                    backgroundColor: .systemBackground,
+                    showsKeyboardToolbar: true,
+                    keyboardToolbarDoneButtonText: "Done",
                     onContentChange: { content in
                         print("Content changed: \(content)")
                     },
@@ -1549,12 +1508,50 @@ struct ContentView: View {
                         editorState.editor = aiTextView
                     }
                 )
-                .background(Color(.systemGray6))
-                .clipped() // Prevent content from overflowing its bounds
+                .padding(.horizontal, 8)
+                .frame(height: geometry.size.height * 0.5 - 22)
+                .background(Color(.systemBackground))
+                .clipped()
+                
+                // 中间部分：工具栏
+                SwiftUIAITextToolbar(
+                    options: toolbarOptions,
+                    barTintColor: .systemBackground,
+                    editor: editorState.editor,
+                    onTextColorChange: {
+                        showTextColorPicker = true
+                    },
+                    onBackgroundColorChange: {
+                        showBackgroundColorPicker = true
+                    },
+                    onImageInsert: {
+                        print("Image insertion")
+                    },
+                    onLinkInsert: {
+                        print("Link insertion")
+                    }
+                )
+                .frame(height: 44)
+                .background(Color(.systemBackground))
+                
+                // 下半部分：HTML预览
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("HTML Preview")
+                        .font(.headline)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color(.systemGray5))
+                    
+                    ScrollView {
+                        Text(editorState.htmlContent)
+                            .font(.system(.caption, design: .monospaced))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                    }
+                    .background(Color(.secondarySystemBackground))
+                }
+                .frame(height: geometry.size.height * 0.5)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-            .zIndex(0) // Ensure editor is below the toolbar
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onChange(of: foregroundColor) { newColor in

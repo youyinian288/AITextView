@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7F3022182E9441E300BD389F /* AITextView in Frameworks */ = {isa = PBXBuildFile; productRef = 7F3022172E9441E300BD389F /* AITextView */; };
+		7F30221A2E9441E400BD389F /* SwiftOpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = 7F30221B2E9441E400BD389F /* SwiftOpenAI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7F3022182E9441E300BD389F /* AITextView in Frameworks */,
+				7F30221A2E9441E400BD389F /* SwiftOpenAI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,6 +133,7 @@
 			name = AITextViewUIKIT;
 			packageProductDependencies = (
 				7F3022172E9441E300BD389F /* AITextView */,
+				7F30221B2E9441E400BD389F /* SwiftOpenAI */,
 			);
 			productName = AITextViewUIKIT;
 			productReference = 7F3021E22E94416F00BD389F /* AITextViewUIKIT.app */;
@@ -216,6 +219,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				7F3022162E9441E300BD389F /* XCLocalSwiftPackageReference "../../../AITextView" */,
+				7F3022192E9441E400BD389F /* XCRemoteSwiftPackageReference "SwiftOpenAI" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7F3021E32E94416F00BD389F /* Products */;
@@ -608,10 +612,26 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		7F3022192E9441E400BD389F /* XCRemoteSwiftPackageReference "SwiftOpenAI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/youyinian288/SwiftOpenAI.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
 		7F3022172E9441E300BD389F /* AITextView */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AITextView;
+		};
+		7F30221B2E9441E400BD389F /* SwiftOpenAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7F3022192E9441E400BD389F /* XCRemoteSwiftPackageReference "SwiftOpenAI" */;
+			productName = SwiftOpenAI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
