@@ -22,12 +22,30 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         
         // 创建主ViewController
         let mainViewController = ViewController()
+        mainViewController.title = "AITextView 编辑器"
         
-        // 创建NavigationController并设置主ViewController为根视图控制器
-        let navigationController = UINavigationController(rootViewController: mainViewController)
+        // 创建AI测试ViewController
+        let aiTestViewController = AIStreamTestViewController()
+        aiTestViewController.title = "AI流式输出测试"
+        
+        // 创建TabBarController
+        let tabBarController = UITabBarController()
+        tabBarController.viewControllers = [
+            UINavigationController(rootViewController: mainViewController),
+            UINavigationController(rootViewController: aiTestViewController)
+        ]
+        
+        // 设置TabBar图标和标题
+        if let mainNav = tabBarController.viewControllers?[0] as? UINavigationController {
+            mainNav.tabBarItem = UITabBarItem(title: "编辑器", image: UIImage(systemName: "doc.text"), tag: 0)
+        }
+        
+        if let aiNav = tabBarController.viewControllers?[1] as? UINavigationController {
+            aiNav.tabBarItem = UITabBarItem(title: "AI测试", image: UIImage(systemName: "brain.head.profile"), tag: 1)
+        }
         
         // 设置window的根视图控制器
-        window?.rootViewController = navigationController
+        window?.rootViewController = tabBarController
         window?.makeKeyAndVisible()
     }
 

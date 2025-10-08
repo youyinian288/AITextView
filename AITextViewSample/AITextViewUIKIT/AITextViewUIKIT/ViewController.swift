@@ -1559,21 +1559,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     private func setupNavigationBar() {
         // 设置导航栏标题
         title = "AITextView 编辑器"
-        
-        // 添加AI测试按钮
-        let aiTestButton = UIBarButtonItem(
-            title: "AI测试",
-            style: .plain,
-            target: self,
-            action: #selector(aiTestButtonTapped)
-        )
-        navigationItem.rightBarButtonItem = aiTestButton
-    }
-    
-    @objc private func aiTestButtonTapped() {
-        let aiTestVC = AIStreamTestViewController()
-        let navController = UINavigationController(rootViewController: aiTestVC)
-        present(navController, animated: true)
     }
     
     // MARK: - Image Selection Methods
