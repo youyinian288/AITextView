@@ -23,7 +23,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 缓存Swift Package Manager
       uses: actions/cache@v4
@@ -70,7 +70,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 缓存Xcode DerivedData
       uses: actions/cache@v4
@@ -108,7 +108,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 选择Xcode版本
       run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
@@ -138,7 +138,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 设置Ruby
       uses: ruby/setup-ruby@v1
@@ -171,7 +171,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 选择Xcode版本
       run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
@@ -204,7 +204,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 运行CodeQL分析
       uses: github/codeql-action/init@v3
@@ -220,7 +220,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 检查README文件
       run: |
@@ -254,7 +254,7 @@ jobs:
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       
     - name: 检查版本一致性
       run: |
