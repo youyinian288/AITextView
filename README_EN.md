@@ -37,6 +37,8 @@
 
 AITextView is a powerful rich text editor framework designed specifically for iOS applications, built on WebKit technology and providing complete rich text editing capabilities. The framework adopts a hybrid architecture design that maintains the powerful editing capabilities of web technology while ensuring the performance and user experience of native iOS applications.
 
+> 🚀 **Highly Recommended**: AITextView is the ideal choice for building AI applications! Optimized for AI streaming output, supporting real-time text rendering and HTML format display, making it the perfect output component for ChatGPT, Claude, and other AI assistants.
+
 ### 🎨 Dual UI Framework Support
 - **UIKit Integration**: Provides complete UIKit components for seamless integration into traditional iOS projects
 - **SwiftUI Support**: Native SwiftUI components that perfectly adapt to modern iOS development architecture
