@@ -14,11 +14,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     var editorView: AITextView!
     var htmlTextView: UITextView!
 
-    lazy var toolbar: AITextToolbar = {
-        let toolbar = AITextToolbar(frame: CGRect(x: 0, y: 0, width: self.view.bounds.width, height: 44))
-        toolbar.options = AITextDefaultOption.all
-        return toolbar
-    }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,9 +47,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         htmlTextView.text = "HTML Preview"
         view.addSubview(htmlTextView)
         
-        // 添加toolbar
-        view.addSubview(toolbar)
-        toolbar.translatesAutoresizingMaskIntoConstraints = false
         
         // 设置约束
         setupConstraints()
@@ -70,14 +62,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             editorView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -8),
             editorView.heightAnchor.constraint(equalTo: safeArea.heightAnchor, multiplier: 0.5, constant: -22),
             
-            // toolbar在editorView底部
-            toolbar.topAnchor.constraint(equalTo: editorView.bottomAnchor),
-            toolbar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            toolbar.heightAnchor.constraint(equalToConstant: 44),
-            
             // htmlTextView占下半部分
-            htmlTextView.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+            htmlTextView.topAnchor.constraint(equalTo: editorView.bottomAnchor),
             htmlTextView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             htmlTextView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             htmlTextView.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor)
@@ -89,8 +75,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         editorView.placeholder = "Edit here"
         
         
-        toolbar.delegate = self
-        toolbar.editor = editorView
         editorView.html = """
         <h1>🎯 AITextView 全面功能测试</h1>
         
@@ -352,65 +336,3 @@ extension ViewController: AITextViewDelegate {
     
 }
 
-extension ViewController: AITextToolbarDelegate {
-
-    fileprivate func randomColor() -> UIColor {
-        let colors = [
-            UIColor.red,
-            UIColor.orange,
-            UIColor.yellow,
-            UIColor.green,
-            UIColor.blue,
-            UIColor.purple
-        ]
-
-        let color = colors[Int(arc4random_uniform(UInt32(colors.count)))]
-        return color
-    }
-
-    func aiTextToolbarChangeTextColor(_ toolbar: AITextToolbar) {
-        let color = randomColor()
-        toolbar.editor?.setTextColor(color)
-    }
-
-    func aiTextToolbarChangeBackgroundColor(_ toolbar: AITextToolbar) {
-        let color = randomColor()
-        toolbar.editor?.setTextBackgroundColor(color)
-    }
-
-    func aiTextToolbarInsertImage(_ toolbar: AITextToolbar) {
-        let alertController = UIAlertController(title: "选择图片", message: nil, preferredStyle: .actionSheet)
-        
-        // 从相册选择
-        let photoLibraryAction = UIAlertAction(title: "从相册选择", style: .default) { _ in
-            self.presentImagePicker()
-        }
-        alertController.addAction(photoLibraryAction)
-        
-        // 输入在线图片URL
-        let urlAction = UIAlertAction(title: "输入图片URL", style: .default) { _ in
-            self.presentImageURLInput()
-        }
-        alertController.addAction(urlAction)
-        
-        // 取消
-        let cancelAction = UIAlertAction(title: "取消", style: .cancel)
-        alertController.addAction(cancelAction)
-        
-        // 设置iPad的popover
-        if let popover = alertController.popoverPresentationController {
-            popover.sourceView = view
-            popover.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 0, height: 0)
-            popover.permittedArrowDirections = []
-        }
-        
-        present(alertController, animated: true)
-    }
-
-    func aiTextToolbarInsertLink(_ toolbar: AITextToolbar) {
-        // Can only add links to selected text, so make sure there is a range selection first
-//       if let hasSelection = toolbar.editor?.rangeSelectionExists(), hasSelection {
-//           toolbar.editor?.insertLink("http://github.com/cjwirth/RichEditorView", title: "Github Link")
-//       }
-    }
-}

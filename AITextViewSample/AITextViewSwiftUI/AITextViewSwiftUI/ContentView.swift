@@ -1482,8 +1482,6 @@ struct ContentView: View {
     @State private var showTextColorPicker: Bool = false
     @State private var showBackgroundColorPicker: Bool = false
     
-    // Toolbar options configuration - using all available options
-    private let toolbarOptions: [AITextDefaultOption] = AITextDefaultOption.all
         
     var body: some View {
         GeometryReader { geometry in
@@ -1511,26 +1509,6 @@ struct ContentView: View {
                 .background(Color(.systemBackground))
                 .clipped()
                 
-                // 中间部分：工具栏
-                SwiftUIAITextToolbar(
-                    options: toolbarOptions,
-                    barTintColor: .systemBackground,
-                    editor: editorState.editor,
-                    onTextColorChange: {
-                        showTextColorPicker = true
-                    },
-                    onBackgroundColorChange: {
-                        showBackgroundColorPicker = true
-                    },
-                    onImageInsert: {
-                        print("Image insertion")
-                    },
-                    onLinkInsert: {
-                        print("Link insertion")
-                    }
-                )
-                .frame(height: 44)
-                .background(Color(.systemBackground))
                 
                 // 下半部分：HTML预览
                 VStack(alignment: .leading, spacing: 0) {
