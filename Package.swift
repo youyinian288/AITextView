@@ -21,11 +21,6 @@ let package = Package(
             path: "AITextView/Sources",
             resources: [.process("Resources")]
         ),
-        .testTarget(
-            name: "AITextViewTests",
-            dependencies: ["AITextView"],
-            path: "AITextViewTests"
-        ),
     ],
     swiftLanguageVersions: [.v5]
 )

@@ -45,8 +45,6 @@ class AITextViewTests: XCTestCase {
         XCTAssertEqual(aiTextView.editorHeight, 0, "编辑器高度初始应该为0")
         XCTAssertTrue(aiTextView.isScrollEnabled, "滚动应该默认启用")
         XCTAssertFalse(aiTextView.editingEnabled, "编辑应该默认禁用")
-        XCTAssertFalse(aiTextView.showsKeyboardToolbar, "键盘工具栏应该默认不显示")
-        XCTAssertEqual(aiTextView.keyboardToolbarDoneButtonText, "Done", "Done按钮文本应该是'Done'")
     }
     
     // MARK: - 属性设置测试
@@ -81,14 +79,6 @@ class AITextViewTests: XCTestCase {
         XCTAssertTrue(aiTextView.webView.scrollView.isScrollEnabled, "webView的滚动也应该相应启用")
     }
     
-    func testKeyboardToolbarProperties() {
-        aiTextView.showsKeyboardToolbar = true
-        XCTAssertTrue(aiTextView.showsKeyboardToolbar, "键盘工具栏应该能够显示")
-        
-        let customText = "关闭"
-        aiTextView.keyboardToolbarDoneButtonText = customText
-        XCTAssertEqual(aiTextView.keyboardToolbarDoneButtonText, customText, "Done按钮文本应该能够自定义")
-    }
     
     // MARK: - 文本格式化功能测试
     

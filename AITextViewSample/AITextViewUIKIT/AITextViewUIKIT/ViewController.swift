@@ -88,9 +88,6 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         editorView.delegate = self
         editorView.placeholder = "Edit here"
         
-        // 使用新的键盘工具栏功能 - 更简洁的方式
-        editorView.showsKeyboardToolbar = true
-        editorView.keyboardToolbarDoneButtonText = "Done"
         
         toolbar.delegate = self
         toolbar.editor = editorView

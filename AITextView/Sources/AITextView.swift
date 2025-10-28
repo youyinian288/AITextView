@@ -89,23 +89,6 @@ private let DefaultInnerLineHeight: Int = 21
         set { webView.accessoryView = newValue }
     }
     
-    /// 是否显示默认的键盘工具栏
-    /// 包含一个"完成"按钮用于隐藏键盘
-    open var showsKeyboardToolbar: Bool = false {
-        didSet {
-            updateKeyboardToolbar()
-        }
-    }
-    
-    /// 键盘工具栏中"完成"按钮的文本
-    /// 默认为"完成"
-    open var keyboardToolbarDoneButtonText: String = "Done" {
-        didSet {
-            if showsKeyboardToolbar {
-                updateKeyboardToolbar()
-            }
-        }
-    }
     
     /// 用于显示文本的内部WKWebView
     // 定义一个内部的 AITextWebView，用于显示编辑器
@@ -1079,33 +1062,5 @@ private let DefaultInnerLineHeight: Int = 21
         return true
     }
     
-    // MARK: - 键盘工具栏
-    // MARK: - Keyboard Toolbar
-    
-    /// 更新键盘工具栏
-    private func updateKeyboardToolbar() {
-        if showsKeyboardToolbar {
-            inputAccessoryView = createKeyboardToolbar()
-        } else {
-            inputAccessoryView = nil
-        }
-    }
-    
-    /// 创建键盘工具栏
-    private func createKeyboardToolbar() -> UIToolbar {
-        let keyboardToolbar = UIToolbar()
-        keyboardToolbar.barStyle = .default
-        keyboardToolbar.items = [
-            UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil),
-            UIBarButtonItem(title: keyboardToolbarDoneButtonText, style: .done, target: self, action: #selector(keyboardToolbarDoneButtonTapped))
-        ]
-        keyboardToolbar.sizeToFit()
-        return keyboardToolbar
-    }
-    
-    /// 键盘工具栏Done按钮点击处理
-    @objc private func keyboardToolbarDoneButtonTapped() {
-        resignFirstResponder()
-    }
     
 }

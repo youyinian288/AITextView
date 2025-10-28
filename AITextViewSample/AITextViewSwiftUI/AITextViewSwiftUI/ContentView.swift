@@ -1496,8 +1496,6 @@ struct ContentView: View {
                     isScrollEnabled: true,
                     editingEnabled: true,
                     backgroundColor: .systemBackground,
-                    showsKeyboardToolbar: true,
-                    keyboardToolbarDoneButtonText: "Done",
                     onContentChange: { content in
                         print("Content changed: \(content)")
                     },

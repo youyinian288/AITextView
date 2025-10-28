@@ -20,8 +20,6 @@ public struct SwiftUIAITextView: UIViewRepresentable {
     private let isScrollEnabled: Bool
     private let editingEnabled: Bool
     private let backgroundColor: UIColor
-    private let showsKeyboardToolbar: Bool
-    private let keyboardToolbarDoneButtonText: String
     private let onContentChange: ((String) -> Void)?
     private let onHeightChange: ((Int) -> Void)?
     private let onFocusChange: ((Bool) -> Void)?
@@ -37,8 +35,6 @@ public struct SwiftUIAITextView: UIViewRepresentable {
     ///   - isScrollEnabled: Whether scrolling is enabled
     ///   - editingEnabled: Whether editing is enabled
     ///   - backgroundColor: Background color
-    ///   - showsKeyboardToolbar: Whether to show keyboard toolbar
-    ///   - keyboardToolbarDoneButtonText: Keyboard toolbar Done button text
     ///   - onContentChange: Content change callback
     ///   - onHeightChange: Height change callback
     ///   - onFocusChange: Focus change callback
@@ -50,8 +46,6 @@ public struct SwiftUIAITextView: UIViewRepresentable {
         isScrollEnabled: Bool = true,
         editingEnabled: Bool = true,
         backgroundColor: UIColor = .systemBackground,
-        showsKeyboardToolbar: Bool = false,
-        keyboardToolbarDoneButtonText: String = "Done",
         onContentChange: ((String) -> Void)? = nil,
         onHeightChange: ((Int) -> Void)? = nil,
         onFocusChange: ((Bool) -> Void)? = nil,
@@ -63,8 +57,6 @@ public struct SwiftUIAITextView: UIViewRepresentable {
         self.isScrollEnabled = isScrollEnabled
         self.editingEnabled = editingEnabled
         self.backgroundColor = backgroundColor
-        self.showsKeyboardToolbar = showsKeyboardToolbar
-        self.keyboardToolbarDoneButtonText = keyboardToolbarDoneButtonText
         self.onContentChange = onContentChange
         self.onHeightChange = onHeightChange
         self.onFocusChange = onFocusChange
@@ -87,9 +79,6 @@ public struct SwiftUIAITextView: UIViewRepresentable {
         editor.editingEnabled = editingEnabled
         editor.setEditorBackgroundColor(backgroundColor)
         
-        // Keyboard toolbar configuration
-        editor.showsKeyboardToolbar = showsKeyboardToolbar
-        editor.keyboardToolbarDoneButtonText = keyboardToolbarDoneButtonText
         
         // Set initial content
         if !htmlContent.isEmpty {
@@ -118,14 +107,6 @@ public struct SwiftUIAITextView: UIViewRepresentable {
             uiView.placeholder = placeholder
         }
         
-        // Update keyboard toolbar configuration
-        if uiView.showsKeyboardToolbar != showsKeyboardToolbar {
-            uiView.showsKeyboardToolbar = showsKeyboardToolbar
-        }
-        
-        if uiView.keyboardToolbarDoneButtonText != keyboardToolbarDoneButtonText {
-            uiView.keyboardToolbarDoneButtonText = keyboardToolbarDoneButtonText
-        }
     }
 }
 
