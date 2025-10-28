@@ -60,14 +60,20 @@ public enum JSError: Error, CustomStringConvertible {
     /// 编辑器是否已完成加载
     // 定义一个私有布尔值，标记编辑器是否已加载
     private var isEditorLoaded = false
+    
+    /// 流式 Markdown 处理器
+    private var streamMarkdownProcessor: StreamMarkdownProcessor?
+    
+    /// 是否启用自动滚动（流式输出时）
+    public var isAutoScrollEnabled: Bool = true
         
-    /// 当前加载在编辑器视图中的HTML，如果已加载。如果尚未加载，则是编辑器视图初始化完成后要加载的HTML
-    // 定义一个字符串，用于设置或获取编辑器的 HTML 内容
-    public var html: String = "" {
+    /// 当前 Markdown 内容
+    // 定义一个字符串，用于设置或获取编辑器的 Markdown 内容
+    public var markdown: String = "" {
         // 在属性值改变后执行
         didSet {
-            // 调用 setHTML 方法来更新内容
-            setHTML(html)
+            // 调用 setMarkdown 方法来更新内容
+            setMarkdown(markdown)
         }
     }
     
@@ -115,11 +121,13 @@ public enum JSError: Error, CustomStringConvertible {
         webView.scrollView.clipsToBounds = false
         // 将 webView 添加到当前视图
         addSubview(webView)
-        // 加载编辑器 HTML 文件
+        // 初始化流式 Markdown 处理器
+        streamMarkdownProcessor = StreamMarkdownProcessor(webView: webView)
+        // 加载流式 Markdown 编辑器 HTML 文件
         loadRichEditorView()
     }
 
-    // 私有方法，用于加载编辑器视图
+    // 私有方法，用于加载流式 Markdown 编辑器视图
     private func loadRichEditorView() {
         // 声明一个 Bundle 对象
         let bundle: Bundle
@@ -131,8 +139,8 @@ public enum JSError: Error, CustomStringConvertible {
         // 否则，获取包含 AITextView 类的 bundle
         bundle = Bundle(for: AITextView.self)
     #endif
-        // 获取 rich_editor.html 文件的路径
-        if let filePath = bundle.path(forResource: "rich_editor", ofType: "html") {
+        // 获取 stream_markdown_editor.html 文件的路径
+        if let filePath = bundle.path(forResource: "stream_markdown_editor", ofType: "html") {
             // 创建一个文件 URL
             let url = URL(fileURLWithPath: filePath, isDirectory: false)
             // 让 webView 加载这个文件 URL，并允许访问其所在目录
@@ -144,7 +152,7 @@ public enum JSError: Error, CustomStringConvertible {
             return
         }
         // 如果找不到文件，则抛出致命错误
-        fatalError("Failed to load rich_editor.html, check your dependency configuration")
+        fatalError("Failed to load stream_markdown_editor.html, check your dependency configuration")
     }
     
     // MARK: - AI流式输出
@@ -152,15 +160,50 @@ public enum JSError: Error, CustomStringConvertible {
     
     
     
-    // 设置编辑器的 HTML 内容
-    private func setHTML(_ value: String) {
-        // 如果编辑器已加载
-        if isEditorLoaded {
-            // 执行 JavaScript 设置 HTML 内容，注意转义
-            runJS("RE.setHtml('\(value.escaped)')") { _ in
-                // HTML内容设置完成
-            }
+    // MARK: - 流式 Markdown 方法
+    // MARK: Stream Markdown Methods
+    
+    /// 流式更新 Markdown 内容
+    /// - Parameters:
+    ///   - markdown: 新的 Markdown 内容片段
+    ///   - isComplete: 是否为完整内容（流式结束）
+    public func updateMarkdownStream(_ markdown: String, isComplete: Bool = false) {
+        streamMarkdownProcessor?.updateMarkdownStream(markdown, isComplete: isComplete)
+        
+        // 如果启用自动滚动，在流式更新时自动滚动到底部
+        if isAutoScrollEnabled && !markdown.isEmpty {
+            scrollToBottom(animated: true)
         }
+    }
+    
+    /// 设置 Markdown 内容（非流式）
+    /// - Parameter markdown: 完整的 Markdown 内容
+    @objc(setMarkdownContent:)
+    public func setMarkdown(_ markdown: String) {
+        print("📝 AITextView.setMarkdown 被调用，内容长度: \(markdown.count), WebView已加载: \(isEditorLoaded)")
+        
+        if isEditorLoaded {
+            print("✅ WebView已加载，直接设置内容")
+            streamMarkdownProcessor?.setMarkdown(markdown)
+        } else {
+            print("⏳ WebView未加载，等待加载完成后设置")
+            // WebView 未加载完成时，内容会在 didFinish 中设置
+        }
+    }
+    
+    /// 重置流式状态
+    public func resetMarkdown() {
+        streamMarkdownProcessor?.reset()
+    }
+    
+    /// 获取当前 Markdown 内容
+    public var currentMarkdownContent: String {
+        return streamMarkdownProcessor?.currentContent ?? ""
+    }
+    
+    /// 是否正在流式更新
+    public var isCurrentlyStreaming: Bool {
+        return streamMarkdownProcessor?.isCurrentlyStreaming ?? false
     }
     
     
@@ -229,8 +272,15 @@ public enum JSError: Error, CustomStringConvertible {
     
     // 当 webView 完成加载时调用
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // empy
-        // 空实现
+        print("🌐 WebView 加载完成")
+        isEditorLoaded = true
+        delegate?.aiTextViewDidLoad?(self)
+        
+        // 如果有待设置的 Markdown 内容，现在设置它
+        if !markdown.isEmpty {
+            print("📝 设置待处理的 Markdown 内容")
+            setMarkdown(markdown)
+        }
     }
     
     // 在 webView 决定是否处理导航操作之前调用
@@ -281,13 +331,32 @@ public enum JSError: Error, CustomStringConvertible {
     /// 滚动到编辑器底部（用于AI内容生成时）
     /// - Parameter animated: 是否使用动画滚动，默认为true
     public func scrollToBottom(animated: Bool = true) {
-        runJS("document.getElementById('editor').scrollHeight") { scrollHeight in
-            let height = Int(scrollHeight) ?? 0
-            let scrollView = self.webView.scrollView
-            let maxOffsetY = max(0, CGFloat(height) - scrollView.bounds.height)
-            
-            let offset = CGPoint(x: 0, y: maxOffsetY)
-            scrollView.setContentOffset(offset, animated: animated)
+        // 使用JavaScript进行平滑滚动，这样更准确
+        let jsCode = """
+        const editor = document.getElementById('editor');
+        const scrollView = editor.parentElement;
+        
+        if (scrollView) {
+            scrollView.scrollTo({
+                top: scrollView.scrollHeight,
+                behavior: 'smooth'
+            });
+        } else {
+            editor.scrollTop = editor.scrollHeight;
+        }
+        """
+        
+        webView.evaluateJavaScript(jsCode) { result, error in
+            if let error = error {
+                print("❌ 滚动失败: \(error)")
+                // 备用方案：使用原生滚动
+                DispatchQueue.main.async {
+                    let scrollView = self.webView.scrollView
+                    let maxOffsetY = max(0, scrollView.contentSize.height - scrollView.bounds.height)
+                    let offset = CGPoint(x: 0, y: maxOffsetY)
+                    scrollView.setContentOffset(offset, animated: animated)
+                }
+            }
         }
     }
     
@@ -298,13 +367,13 @@ public enum JSError: Error, CustomStringConvertible {
     private func performCommand(_ method: String) {
         // 如果命令以 "ready" 开头
         if method.hasPrefix("ready") {
-            // If loading for the first time, we have to set the content HTML to be displayed
+            // If loading for the first time, we have to set the content Markdown to be displayed
             // 如果是第一次加载
             if !isEditorLoaded {
                 // 标记编辑器已加载
                 isEditorLoaded = true
-                // 设置初始 HTML 内容
-                setHTML(html)
+                // 设置初始 Markdown 内容
+                setMarkdown(markdown)
                 
                 // 调用代理的 didLoad 方法
                 delegate?.aiTextViewDidLoad?(self)
