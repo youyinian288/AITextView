@@ -247,70 +247,15 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         title = "AITextView 编辑器"
     }
     
-    // MARK: - Image Selection Methods
+
     
-    private func presentImagePicker() {
-        let imagePicker = UIImagePickerController()
-        imagePicker.delegate = self
-        imagePicker.sourceType = .photoLibrary
-        imagePicker.allowsEditing = true
-        present(imagePicker, animated: true)
-    }
+   
     
-    private func presentImageURLInput() {
-        let alertController = UIAlertController(title: "输入图片URL", message: "请输入图片的网络地址", preferredStyle: .alert)
-        
-        alertController.addTextField { textField in
-            textField.placeholder = "https://example.com/image.jpg"
-            textField.keyboardType = .URL
-        }
-        
-        let confirmAction = UIAlertAction(title: "确定", style: .default) { _ in
-            if let textField = alertController.textFields?.first,
-               let urlString = textField.text,
-               !urlString.isEmpty {
-                self.insertImageFromURL(urlString)
-            }
-        }
-        
-        let cancelAction = UIAlertAction(title: "取消", style: .cancel)
-        
-        alertController.addAction(confirmAction)
-        alertController.addAction(cancelAction)
-        
-        present(alertController, animated: true)
-    }
-    
-    private func insertImageFromURL(_ urlString: String) {
-        editorView.insertImage(urlString, alt: "Online Image")
-    }
-    
-    private func insertLocalImage(_ image: UIImage) {
-        // 将本地图片转换为base64格式插入
-        if let imageData = image.jpegData(compressionQuality: 0.8) {
-            let base64String = imageData.base64EncodedString()
-            let dataURL = "data:image/jpeg;base64,\(base64String)"
-            editorView.insertImage(dataURL, alt: "Local Image")
-        }
+
     }
     
     // MARK: - UIImagePickerControllerDelegate
     
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        picker.dismiss(animated: true) {
-            if let editedImage = info[.editedImage] as? UIImage {
-                self.insertLocalImage(editedImage)
-            } else if let originalImage = info[.originalImage] as? UIImage {
-                self.insertLocalImage(originalImage)
-            }
-        }
-    }
-    
-    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
-        picker.dismiss(animated: true)
-    }
-
-}
 
 extension ViewController: AITextViewDelegate {
 

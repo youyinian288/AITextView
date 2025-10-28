@@ -44,35 +44,13 @@ private let DefaultInnerLineHeight: Int = 21
     // 当编辑器内容变化时，会调用这个可选方法
     @objc optional func aiTextView(_ editor: AITextView, contentDidChange content: String)
     
-    /// 当富编辑器开始编辑时调用
-    // 当编辑器在特定点获取焦点时，会调用这个可选方法
-    @objc optional func aiTextViewTookFocusAt(_ editor: AITextView, at: CGPoint)
-  
-    /// 当富编辑器开始编辑时调用
-    // 当编辑器获取焦点时，会调用这个可选方法
-    @objc optional func aiTextViewTookFocus(_ editor: AITextView)
-    
-    /// 当富编辑器停止编辑或失去焦点时调用
-    // 当编辑器失去焦点时，会调用这个可选方法
-    @objc optional func aiTextViewLostFocus(_ editor: AITextView)
-    
     /// 当AITextView准备接收输入时调用
     /// 更具体地说，当内部WKWebView首次加载且contentHTML被设置时调用
     // 当编辑器加载完成时，会调用这个可选方法
     @objc optional func aiTextViewDidLoad(_ editor: AITextView)
-    
-    /// 当内部WKWebView开始加载它不知道如何响应的URL时调用
-    /// 例如，如果有外部链接，用户点击它时调用
-    // 当用户与一个 URL 交互时（例如点击链接），会调用这个可选方法，返回一个布尔值决定是否处理该 URL
-    @objc optional func aiTextView(_ editor: AITextView, shouldInteractWith url: URL) -> Bool
-    
-    /// 当自定义操作被JS中的回调调用时调用
-    /// 默认情况下，除非被一些自定义JS调用，否则不会使用此方法
-    // 当 JavaScript 调用一个自定义操作时，会调用这个可选方法
-    @objc optional func aiTextView(_ editor: AITextView, handle action: String)
 }
 
-/// AITextView是一个UIView，用于显示富文本样式，并允许以所见即所得的方式进行编辑
+/// AITextView是一个UIView，用于显示AI流式输出的HTML内容
 // 定义一个公开的类 AITextView，继承自 UIView，并遵循多个协议
 @objcMembers open class AITextView: UIView, UIScrollViewDelegate, WKNavigationDelegate, UIGestureRecognizerDelegate {
     /// 将接收回调的代理，当某些操作完成时
@@ -101,16 +79,6 @@ private let DefaultInnerLineHeight: Int = 21
         didSet {
             // 将 webView 的 scrollView 的 isScrollEnabled 设置为新值
             webView.scrollView.isScrollEnabled = isScrollEnabled
-        }
-    }
-    
-    /// 是否允许用户在视图中输入
-    // 定义一个布尔值，控制是否允许编辑
-    open var editingEnabled: Bool = false {
-        // 在属性值改变后执行
-        didSet {
-            // 将 contentEditable 设置为新值
-            contentEditable = editingEnabled
         }
     }
     
@@ -149,11 +117,6 @@ private let DefaultInnerLineHeight: Int = 21
     /// 编辑器是否已完成加载
     // 定义一个私有布尔值，标记编辑器是否已加载
     private var isEditorLoaded = false
-    
-    /// 存储编辑器加载后内容是否应该可编辑的值
-    /// 基本上是编辑器加载前的"isEditingEnabled"
-    // 定义一个私有布尔值，在编辑器加载前保存 editingEnabled 的状态
-    private var editingEnabledVar = true
         
     /// 当前加载在编辑器视图中的HTML，如果已加载。如果尚未加载，则是编辑器视图初始化完成后要加载的HTML
     // 定义一个字符串，用于设置或获取编辑器的 HTML 内容
@@ -264,13 +227,9 @@ private let DefaultInnerLineHeight: Int = 21
         fatalError("Failed to load rich_editor.html, check your dependency configuration")
     }
     
-    // MARK: - 富文本编辑
-    // MARK: - Rich Text Editing
+    // MARK: - AI流式输出
+    // MARK: - AI Streaming Output
     
-    // 检查编辑器是否可编辑，并通过闭包异步返回结果
-    open func isEditingEnabled(handler: @escaping (Bool) -> Void) {
-        isContentEditable(handler: handler)
-    }
     
     // 获取行高，并通过闭包异步返回结果
     private func getLineHeight(handler: @escaping (Int) -> Void) {
@@ -337,207 +296,9 @@ private let DefaultInnerLineHeight: Int = 21
         }
     }
     
-    /// The href of the current selection, if the current selection's parent is an anchor tag.
-    /// Will be nil if there is no href, or it is an empty string.
-    // 获取当前选中链接的 href，并通过闭包异步返回结果
-    public func getSelectedHref(handler: @escaping (String?) -> Void) {
-        // 检查是否有范围选择
-        hasRangeSelection(handler: { r in
-            // 如果没有范围选择
-            if !r {
-                // 返回 nil
-                handler(nil)
-                return
-            }
-            // 执行 JavaScript 获取选中的 href
-            self.runJS("RE.getSelectedHref()") { r in
-                // 如果返回结果为空字符串
-                if r == "" {
-                    // 返回 nil
-                    handler(nil)
-                } else {
-                    // 否则，返回结果
-                    handler(r)
-                }
-            }
-        })
-    }
     
-    /// Whether or not the selection has a type specifically of "Range".
-    // 检查当前选择是否是范围选择（即选中了一段文本），并通过闭包异步返回结果
-    public func hasRangeSelection(handler: @escaping (Bool) -> Void) {
-        runJS("RE.rangeSelectionExists()") { r in
-            handler(r == "true" ? true : false)
-        }
-    }
-    
-    /// Whether or not the selection has a type specifically of "Range" or "Caret".
-    // 检查当前是否有选择（范围选择或光标），并通过闭包异步返回结果
-    public func hasRangeOrCaretSelection(handler: @escaping (Bool) -> Void) {
-        runJS("RE.rangeOrCaretSelectionExists()") { r in
-            handler(r == "true" ? true : false)
-        }
-    }
-    
-    // MARK: - 方法
-    // MARK: Methods
-    
-    // 移除格式
-    public func removeFormat() {
-        runJS("RE.removeFormat()")
-    }
-    
-    // 设置字体大小
-    public func setFontSize(_ size: Int) {
-        runJS("RE.setFontSize('\(size)px')")
-    }
-    
-    // 设置编辑器背景颜色
-    public func setEditorBackgroundColor(_ color: UIColor) {
-        // 使用 color.hex 将 UIColor 转为十六进制字符串
-        runJS("RE.setBackgroundColor('\(color.hex)')")
-    }
-    
-    // 撤销
-    public func undo() {
-        runJS("RE.undo()")
-    }
-    
-    // 重做
-    public func redo() {
-        runJS("RE.redo()")
-    }
-    
-    // 设置粗体
-    public func bold() {
-        runJS("RE.setBold()")
-    }
-    
-    // 设置斜体
-    public func italic() {
-        runJS("RE.setItalic()")
-    }
-    
-    // "superscript" is a keyword
-    // 设置下标
-    public func subscriptText() {
-        runJS("RE.setSubscript()")
-    }
-    
-    // 设置上标
-    public func superscript() {
-        runJS("RE.setSuperscript()")
-    }
-    
-    // 设置删除线
-    public func strikethrough() {
-        runJS("RE.setStrikeThrough()")
-    }
-    
-    // 设置下划线
-    public func underline() {
-        runJS("RE.setUnderline()")
-    }
-    
-    // 设置文字颜色
-    public func setTextColor(_ color: UIColor) {
-        // 准备插入，这可能会恢复之前的选择
-        runJS("RE.prepareInsert()")
-        // 设置颜色
-        runJS("RE.setTextColor('\(color.hex)')")
-    }
-    
-    // 设置编辑器默认字体颜色
-    public func setEditorFontColor(_ color: UIColor) {
-        runJS("RE.setBaseTextColor('\(color.hex)')")
-    }
-    
-    // 设置文字背景颜色
-    public func setTextBackgroundColor(_ color: UIColor) {
-        // 准备插入
-        runJS("RE.prepareInsert()")
-        // 设置背景颜色
-        runJS("RE.setTextBackgroundColor('\(color.hex)')")
-    }
-    
-    // 设置标题 (h1, h2, etc.)
-    public func header(_ h: Int) {
-        runJS("RE.setHeading('\(h)')")
-    }
-    
-    // 增加缩进
-    public func indent() {
-        runJS("RE.setIndent()")
-    }
-    
-    // 减少缩进
-    public func outdent() {
-        runJS("RE.setOutdent()")
-    }
-    
-    // 设置有序列表
-    public func orderedList() {
-        runJS("RE.setOrderedList()")
-    }
-    
-    // 设置无序列表
-    public func unorderedList() {
-        runJS("RE.setUnorderedList()")
-    }
-    
-    // 设置引用块
-    public func blockquote() {
-        runJS("RE.setBlockquote()");
-    }
-    
-    // 左对齐
-    public func alignLeft() {
-        runJS("RE.setJustifyLeft()")
-    }
-    
-    // 居中对齐
-    public func alignCenter() {
-        runJS("RE.setJustifyCenter()")
-    }
-    
-    // 右对齐
-    public func alignRight() {
-        runJS("RE.setJustifyRight()")
-    }
-    
-    // 插入图片
-    public func insertImage(_ url: String, alt: String) {
-        // 准备插入
-        runJS("RE.prepareInsert()")
-        // 插入图片，注意对 url 和 alt 进行转义
-        runJS("RE.insertImage('\(url.escaped)', '\(alt.escaped)')")
-    }
-    
-    // 插入链接
-    public func insertLink(_ href: String, title: String) {
-        // 准备插入
-        runJS("RE.prepareInsert()")
-        // 插入链接，注意对 href 和 title 进行转义
-        runJS("RE.insertLink('\(href.escaped)', '\(title.escaped)')")
-    }
-    
-    // 让编辑器获取焦点
-    public func focus() {
-        runJS("RE.focus()")
-    }
-    
-    // 让编辑器在特定点获取焦点
-    public func focus(at: CGPoint) {
-        // 调用代理方法
-        delegate?.aiTextViewTookFocusAt?(self, at: at)
-        // 执行 JavaScript 在特定点聚焦
-        runJS("RE.focusAtPoint(\(at.x), \(at.y))")
-    }
-    
-    // 让编辑器失去焦点
-    public func blur() {
-        runJS("RE.blurFocus()")
-    }
+    // MARK: - AI流式输出方法
+    // MARK: AI Streaming Output Methods
     
     /// Runs some JavaScript on the WKWebView and returns the result
     /// If there is no result, returns an empty string
@@ -588,46 +349,7 @@ private let DefaultInnerLineHeight: Int = 21
         }
     }
     
-    // MARK: - Async/Await 版本
-    @available(iOS 13.0, *)
-    @MainActor // 确保在主线程调用，因为 WKWebView 只能在主线程操作
-    public func runJS(_ js: String) async throws -> String {
-        // 使用 withCheckedThrowingContinuation 包装闭包回调
-        return try await withCheckedThrowingContinuation { continuation in
-            webView.evaluateJavaScript(js) { (result, error) in
-                // 1. 处理错误
-                if let error = error {
-                    // 如果 JS 执行出错，就抛出自定义错误
-                    continuation.resume(throwing: JSError.javaScriptError(error))
-                    return
-                }
-
-                // 2. 处理各种成功的结果类型
-                if let resultInt = result as? Int {
-                    continuation.resume(returning: "\(resultInt)")
-                } else if let resultDouble = result as? Double {
-                    // 处理浮点数，包括 NaN 和无穷大
-                    if resultDouble.isNaN {
-                        continuation.resume(returning: "0") // NaN 转换为 0
-                    } else if resultDouble.isInfinite {
-                        continuation.resume(returning: "0") // 无穷大转换为 0
-                    } else {
-                        continuation.resume(returning: "\(Int(resultDouble.rounded()))") // 四舍五入为整数
-                    }
-                } else if let resultBool = result as? Bool {
-                    continuation.resume(returning: resultBool ? "true" : "false")
-                } else if let resultStr = result as? String {
-                    continuation.resume(returning: resultStr)
-                } else if result == nil { // 明确处理 JS 的 null 或 undefined
-                    continuation.resume(returning: "")
-                } else {
-                    // 如果是其他无法处理的类型，可以返回空字符串或抛出错误
-                    // 这里我们选择抛出一个更具体的错误
-                    continuation.resume(throwing: JSError.unexpectedResult(result))
-                }
-            }
-        }
-    }
+   
     
     // MARK: - 代理方法
     // MARK: - Delegate Methods
@@ -685,19 +407,6 @@ private let DefaultInnerLineHeight: Int = 21
             return decisionHandler(WKNavigationActionPolicy.cancel);
         }
         
-        // User is tapping on a link, so we should react accordingly
-        // 如果导航类型是点击链接
-        if navigationAction.navigationType == .linkActivated {
-            // 如果请求的 URL 存在
-            if let url = navigationAction.request.url {
-                // 调用代理方法，询问是否应该处理这个 URL
-                if delegate?.aiTextView?(self, shouldInteractWith: url) ?? false {
-                    // 如果代理返回 true，允许导航
-                    return decisionHandler(WKNavigationActionPolicy.allow);
-                }
-            }
-        }
-        
         // 默认允许导航
         return decisionHandler(WKNavigationActionPolicy.allow);
     }
@@ -715,43 +424,7 @@ private let DefaultInnerLineHeight: Int = 21
     // MARK: - 私有实现细节
     // MARK: - Private Implementation Details
     
-    // 定义一个私有计算属性，用于控制编辑器是否可编辑
-    private var contentEditable: Bool = false {
-        // 在属性值改变后执行
-        didSet {
-            // 更新 editingEnabledVar
-            editingEnabledVar = contentEditable
-            // 如果编辑器已加载
-            if isEditorLoaded {
-                // 根据 contentEditable 的值设置 JavaScript 中的 contentEditable 属性
-                let value = (contentEditable ? "true" : "false")
-                runJS("RE.editor.contentEditable = \(value)")
-            }
-        }
-    }
-    // 异步检查内容是否可编辑
-    private func isContentEditable(handler: @escaping (Bool) -> Void) {
-        if isEditorLoaded {				
-            // to get the "editable" value is a different property, than to disable it
-            // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/contentEditable
-            // 执行 JavaScript 获取 isContentEditable 属性值
-            runJS("RE.editor.isContentEditable") { value in
-                // 更新 editingEnabledVar
-                self.editingEnabledVar = Bool(value) ?? false
-            }
-        }
-    }
     
-    /// The position of the caret relative to the currently shown content.
-    /// For example, if the cursor is directly at the top of what is visible, it will return 0.
-    /// This also means that it will be negative if it is above what is currently visible.
-    /// Can also return 0 if some sort of error occurs between JS and here.
-    // 获取光标相对于可见区域的 Y 坐标，并通过闭包异步返回
-    private func relativeCaretYPosition(handler: @escaping (Int) -> Void) {
-        runJS("RE.getRelativeCaretYPosition()") { r in
-            handler(Int(r) ?? 0)
-        }
-    }
     
     // MARK: - Async/Await 版本的辅助函数
     @available(iOS 13.0, *)
@@ -780,16 +453,6 @@ private let DefaultInnerLineHeight: Int = 21
         }
     }
     
-    @available(iOS 13.0, *)
-    private func relativeCaretYPosition() async -> Int {
-        do {
-            let result = try await runJS("RE.getRelativeCaretYPosition()")
-            return Int(result) ?? 0
-        } catch {
-            print("Error getting relative caret position: \(error)")
-            return 0
-        }
-    }
     
     // 更新编辑器高度
     private func updateHeight() {
@@ -805,124 +468,6 @@ private let DefaultInnerLineHeight: Int = 21
         }
     }
     
-    /// Scrolls the editor to a position where the caret is visible.
-    /// Called repeatedly to make sure the caret is always visible when inputting text.
-    /// Works only if the `lineHeight` of the editor is available.
-    // 滚动编辑器，确保光标可见
-    private func scrollCaretToVisible() {
-        // 获取 webView 的 scrollView
-        let scrollView = self.webView.scrollView
-        
-        // 获取编辑器客户端高度
-        getClientHeight(handler: { clientHeight in
-            // 计算内容高度
-            let contentHeight = clientHeight > 0 ? CGFloat(clientHeight) : scrollView.frame.height
-            // 设置 scrollView 的 contentSize
-            scrollView.contentSize = CGSize(width: scrollView.frame.width, height: contentHeight)
-            
-            // XXX: Maybe find a better way to get the cursor height
-            // 获取行高
-            self.getLineHeight(handler: { lh in
-                // 计算光标高度
-                let lineHeight = CGFloat(lh)
-                let cursorHeight = lineHeight - 4
-                // 获取光标相对位置
-                self.relativeCaretYPosition(handler: { r in
-                    // 可见位置
-                    let visiblePosition = CGFloat(r)
-                    // 定义一个可选的偏移量
-                    var offset: CGPoint?
-                    
-                    // 如果光标在可见区域下方
-                    if visiblePosition + cursorHeight > scrollView.bounds.size.height {
-                        // Visible caret position goes further than our bounds
-                        // 计算新的偏移量，使光标滚动到可见区域
-                        offset = CGPoint(x: 0, y: (visiblePosition + lineHeight) - scrollView.bounds.height + scrollView.contentOffset.y)
-                    // 如果光标在可见区域上方
-                    } else if visiblePosition < 0 {
-                        // Visible caret position is above what is currently visible
-                        // 计算新的偏移量
-                        var amount = scrollView.contentOffset.y + visiblePosition
-                        // 确保偏移量不小于 0
-                        amount = amount < 0 ? 0 : amount
-                        offset = CGPoint(x: scrollView.contentOffset.x, y: amount)
-                    }
-                    
-                    // 如果计算出了新的偏移量
-                    if let offset = offset {
-                        // 带动画地设置 scrollView 的 contentOffset
-                        scrollView.setContentOffset(offset, animated: true)
-                    }
-                })
-            })
-        })
-    }
-    
-    /// Scrolls the editor to a position where the caret is visible (Async/Await version).
-    /// Called repeatedly to make sure the caret is always visible when inputting text.
-    /// Works only if the `lineHeight` of the editor is available.
-    /// 
-    /// Usage example:
-    /// ```swift
-    /// Task {
-    ///     await scrollCaretToVisible()
-    /// }
-    /// ```
-    // 滚动编辑器，确保光标可见 (Async/Await 版本)
-    @available(iOS 13.0, *)
-    private func scrollCaretToVisible() async {
-        // 获取 webView 的 scrollView
-        let scrollView = self.webView.scrollView
-        
-        // 获取编辑器客户端高度
-        let clientHeight = await getClientHeight()
-        // 计算内容高度
-        let contentHeight = clientHeight > 0 ? CGFloat(clientHeight) : scrollView.frame.height
-        // 设置 scrollView 的 contentSize
-        scrollView.contentSize = CGSize(width: scrollView.frame.width, height: contentHeight)
-        
-        // XXX: Maybe find a better way to get the cursor height
-        // 获取行高
-        let lineHeightInt = await getLineHeight()
-        // 计算光标高度
-        let lineHeight = CGFloat(lineHeightInt)
-        let cursorHeight = lineHeight - 4
-        
-        // 获取光标相对位置
-        let relativePosition = await relativeCaretYPosition()
-        // 可见位置
-        let visiblePosition = CGFloat(relativePosition)
-        // 定义一个可选的偏移量
-        var offset: CGPoint?
-        
-        // 如果光标在可见区域下方
-        if visiblePosition + cursorHeight > scrollView.bounds.size.height {
-            // Visible caret position goes further than our bounds
-            // 计算新的偏移量，使光标滚动到可见区域
-            offset = CGPoint(x: 0, y: (visiblePosition + lineHeight) - scrollView.bounds.height + scrollView.contentOffset.y)
-        // 如果光标在可见区域上方
-        } else if visiblePosition < 0 {
-            // Visible caret position is above what is currently visible
-            // 计算新的偏移量
-            var amount = scrollView.contentOffset.y + visiblePosition
-            // 确保偏移量不小于 0
-            amount = amount < 0 ? 0 : amount
-            offset = CGPoint(x: scrollView.contentOffset.x, y: amount)
-        }
-        
-        // 如果计算出了新的偏移量
-        if let offset = offset {
-            // 带动画地设置 scrollView 的 contentOffset
-            scrollView.setContentOffset(offset, animated: true)
-        }
-    }
-    
-    /// Public async version of scrollCaretToVisible for external use
-    /// 公开的异步版本，供外部调用
-    @available(iOS 13.0, *)
-    public func scrollCaretToVisibleAsync() async {
-        await scrollCaretToVisible()
-    }
     
     /// 滚动到编辑器底部（用于AI内容生成时）
     /// - Parameter animated: 是否使用动画滚动，默认为true
@@ -937,23 +482,7 @@ private let DefaultInnerLineHeight: Int = 21
         }
     }
     
-    /// 滚动到编辑器底部的异步版本
-    /// - Parameter animated: 是否使用动画滚动，默认为true
-    @available(iOS 13.0, *)
-    public func scrollToBottomAsync(animated: Bool = true) async {
-        do {
-            let scrollHeight = try await runJS("document.getElementById('editor').scrollHeight")
-            let height = Int(scrollHeight) ?? 0
-            let scrollView = self.webView.scrollView
-            let maxOffsetY = max(0, CGFloat(height) - scrollView.bounds.height)
-            
-            let offset = CGPoint(x: 0, y: maxOffsetY)
-            scrollView.setContentOffset(offset, animated: animated)
-        } catch {
-            print("Error scrolling to bottom: \(error)")
-        }
-    }
-    
+   
     /// Called when actions are received from JavaScript
     /// - parameter method: String with the name of the method and optional parameters that were passed in
     // 执行从 JavaScript 收到的命令
@@ -969,8 +498,6 @@ private let DefaultInnerLineHeight: Int = 21
                 setHTML(html)
                 // 更新 contentHTML 属性
                 contentHTML = html
-                // 设置可编辑状态
-                contentEditable = editingEnabledVar
                 // 设置占位符
                 placeholder = placeholderText
                 // 设置行高
@@ -984,14 +511,6 @@ private let DefaultInnerLineHeight: Int = 21
         }
         // 如果命令以 "input" 开头
         else if method.hasPrefix("input") {
-            // 滚动以确保光标可见
-            if #available(iOS 13.0, *) {
-                Task {
-                    await scrollCaretToVisible()
-                }
-            } else {
-                scrollCaretToVisible()
-            }
             // 获取最新的 HTML 内容
             runJS("RE.getHtml()") { content in
                 // 更新 contentHTML
@@ -1005,62 +524,8 @@ private let DefaultInnerLineHeight: Int = 21
             // 更新高度
             updateHeight()
         }
-        // 如果命令以 "focus" 开头
-        else if method.hasPrefix("focus") {
-            // 调用代理的 tookFocus 方法
-            delegate?.aiTextViewTookFocus?(self)
-        }
-        // 如果命令以 "blur" 开头
-        else if method.hasPrefix("blur") {
-            // 调用代理的 lostFocus 方法
-            delegate?.aiTextViewLostFocus?(self)
-        }
-        // 如果命令以 "action/" 开头
-        else if method.hasPrefix("action/") {
-            // 获取最新的 HTML 内容
-            runJS("RE.getHtml()") { content in
-                // 更新 contentHTML
-                self.contentHTML = content
-                
-                // If there are any custom actions being called
-                // We need to tell the delegate about it
-                // 定义动作前缀
-                let actionPrefix = "action/"
-                // 获取前缀的范围
-                let range = method.range(of: actionPrefix)!
-                // 提取动作名称
-                let action = method.replacingCharacters(in: range, with: "")
-                
-                // 调用代理的 handle action 方法
-                self.delegate?.aiTextView?(self, handle: action)
-            }
-        }
     }
     
-    // MARK: - 响应者处理
-    // MARK: - Responder Handling
-    
-    // 覆盖 becomeFirstResponder 方法，使其成为第一响应者
-    override open func becomeFirstResponder() -> Bool {
-        // 如果 webView 还不是第一响应者
-        if !webView.isFirstResponder {
-            // 让编辑器获取焦点
-            focus()
-            // 返回 true 表示成功
-            return true
-        } else {
-            // 否则返回 false
-            return false
-        }
-    }
-    
-    // 覆盖 resignFirstResponder 方法，使其辞去第一响应者
-    open override func resignFirstResponder() -> Bool {
-        // 让编辑器失去焦点
-        blur()
-        // 返回 true
-        return true
-    }
     
     
 }

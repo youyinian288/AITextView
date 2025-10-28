@@ -60,7 +60,6 @@ class AIStreamTestViewController: UIViewController {
         // 创建输出编辑器
         editorView = AITextView()
         editorView.translatesAutoresizingMaskIntoConstraints = false
-        editorView.editingEnabled = false
         editorView.layer.borderColor = UIColor.systemGray4.cgColor
         editorView.layer.borderWidth = 1.0
         editorView.layer.cornerRadius = 8.0
