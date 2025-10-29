@@ -1,9 +1,754 @@
 /**
  * AITextView Stream Markdown Editor JavaScript
  * 完全模仿 RichEditorView 的架构设计
+ * 集成纯JS Markdown渲染器
  */
 
 "use strict";
+
+// ==================== 纯JS Markdown渲染器 ====================
+
+class BaseComponent {
+  constructor(node, options = {}) {
+    this.node = node
+    this.options = options
+    this.element = null
+    this.children = []
+  }
+
+  render() {
+    throw new Error('render() method must be implemented')
+  }
+
+  // 创建DOM元素
+  createElement(tag, attributes = {}, children = []) {
+    const element = document.createElement(tag)
+    
+    // 设置属性
+    Object.entries(attributes).forEach(([key, value]) => {
+      if (key === 'className') {
+        element.className = value
+      } else if (key === 'style' && typeof value === 'object') {
+        Object.assign(element.style, value)
+      } else if (key.startsWith('on')) {
+        // 事件处理
+        const eventName = key.slice(2).toLowerCase()
+        element.addEventListener(eventName, value)
+      } else {
+        element.setAttribute(key, value)
+      }
+    })
+
+    // 添加子元素
+    children.forEach(child => {
+      if (typeof child === 'string') {
+        element.appendChild(document.createTextNode(child))
+      } else if (child instanceof HTMLElement) {
+        element.appendChild(child)
+      }
+    })
+
+    return element
+  }
+
+  // 递归渲染子节点
+  renderChildren() {
+    if (!this.node.children) return []
+    
+    return this.node.children.map(childNode => {
+      const Component = getNodeComponent(childNode.type)
+      const component = new Component(childNode, this.options)
+      return component.render()
+    })
+  }
+}
+
+// 具体组件实现
+class TextComponent extends BaseComponent {
+  render() {
+    return this.createElement('span', {
+      className: 'text-node'
+    }, [this.node.value || ''])
+  }
+}
+
+class ParagraphComponent extends BaseComponent {
+  render() {
+    const children = this.renderChildren()
+    return this.createElement('p', {
+      className: 'paragraph-node'
+    }, children)
+  }
+}
+
+class HeadingComponent extends BaseComponent {
+  render() {
+    const level = this.node.level || 1
+    const tag = `h${Math.min(level, 6)}`
+    const children = this.renderChildren()
+    
+    return this.createElement(tag, {
+      className: `heading-node heading-${level}`,
+      id: this.generateHeadingId()
+    }, children)
+  }
+
+  generateHeadingId() {
+    const text = this.node.children?.[0]?.value || ''
+    return text.toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .trim()
+  }
+}
+
+class CodeBlockComponent extends BaseComponent {
+  render() {
+    const language = this.node.language || ''
+    const code = this.node.value || ''
+    
+    const container = this.createElement('div', {
+      className: 'code-block-container'
+    })
+
+    if (language) {
+      const langLabel = this.createElement('div', {
+        className: 'code-block-language'
+      }, [language])
+      container.appendChild(langLabel)
+    }
+
+    const pre = this.createElement('pre', {
+      className: 'code-block-pre'
+    })
+    
+    const codeElement = this.createElement('code', {
+      className: `language-${language}`,
+      style: {
+        fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+        fontSize: '14px',
+        lineHeight: '1.5'
+      }
+    }, [code])
+    
+    pre.appendChild(codeElement)
+    container.appendChild(pre)
+
+    const copyButton = this.createElement('button', {
+      className: 'code-block-copy',
+      onClick: () => this.copyCode(code)
+    }, ['复制'])
+    container.appendChild(copyButton)
+
+    return container
+  }
+
+  copyCode(code) {
+    navigator.clipboard.writeText(code).then(() => {
+      console.log('代码已复制到剪贴板')
+    }).catch(err => {
+      console.error('复制失败:', err)
+    })
+  }
+}
+
+class ListComponent extends BaseComponent {
+  render() {
+    const ordered = this.node.ordered || false
+    const tag = ordered ? 'ol' : 'ul'
+    const children = this.renderChildren()
+    
+    return this.createElement(tag, {
+      className: `list-node ${ordered ? 'ordered-list' : 'unordered-list'}`
+    }, children)
+  }
+}
+
+class ListItemComponent extends BaseComponent {
+  render() {
+    const children = this.renderChildren()
+    return this.createElement('li', {
+      className: 'list-item-node'
+    }, children)
+  }
+}
+
+class BlockquoteComponent extends BaseComponent {
+  render() {
+    const children = this.renderChildren()
+    return this.createElement('blockquote', {
+      className: 'blockquote-node',
+      style: {
+        borderLeft: '4px solid #ddd',
+        margin: '16px 0',
+        padding: '0 16px',
+        color: '#666',
+        fontStyle: 'italic'
+      }
+    }, children)
+  }
+}
+
+class LinkComponent extends BaseComponent {
+  render() {
+    const url = this.node.url || '#'
+    const title = this.node.title || ''
+    const children = this.renderChildren()
+    
+    return this.createElement('a', {
+      className: 'link-node',
+      href: url,
+      title: title,
+      target: this.isExternalLink(url) ? '_blank' : '_self',
+      rel: this.isExternalLink(url) ? 'noopener noreferrer' : '',
+      onClick: (e) => this.handleClick(e, url)
+    }, children)
+  }
+
+  isExternalLink(url) {
+    return url.startsWith('http://') || url.startsWith('https://')
+  }
+
+  handleClick(e, url) {
+    if (this.options.onLinkClick) {
+      this.options.onLinkClick(e, url)
+    }
+  }
+}
+
+class ImageComponent extends BaseComponent {
+  render() {
+    const src = this.node.url || ''
+    const alt = this.node.alt || ''
+    const title = this.node.title || ''
+    
+    const img = this.createElement('img', {
+      className: 'image-node markdown-image',
+      src: src,
+      alt: alt,
+      title: title,
+      style: {
+        maxWidth: '100%',
+        height: 'auto',
+        borderRadius: '4px'
+      },
+      onError: () => this.handleImageError(),
+      onClick: () => this.handleImageClick(src)
+    })
+
+    const container = this.createElement('div', {
+      className: 'image-container'
+    }, [img])
+
+    return container
+  }
+
+  handleImageError() {
+    console.warn('图片加载失败:', this.node.url)
+  }
+
+  handleImageClick(src) {
+    if (this.options.onImageClick) {
+      this.options.onImageClick(src)
+    }
+  }
+}
+
+class StrongComponent extends BaseComponent {
+  render() {
+    const children = this.renderChildren()
+    return this.createElement('strong', {
+      className: 'strong-node'
+    }, children)
+  }
+}
+
+class EmphasisComponent extends BaseComponent {
+  render() {
+    const children = this.renderChildren()
+    return this.createElement('em', {
+      className: 'emphasis-node'
+    }, children)
+  }
+}
+
+class InlineCodeComponent extends BaseComponent {
+  render() {
+    return this.createElement('code', {
+      className: 'inline-code-node',
+      style: {
+        fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+        backgroundColor: '#f5f5f5',
+        padding: '2px 4px',
+        borderRadius: '3px',
+        fontSize: '0.9em'
+      }
+    }, [this.node.value || ''])
+  }
+}
+
+class StrikethroughComponent extends BaseComponent {
+  render() {
+    const children = this.renderChildren()
+    return this.createElement('del', {
+      className: 'strikethrough-node'
+    }, children)
+  }
+}
+
+class HorizontalRuleComponent extends BaseComponent {
+  render() {
+    return this.createElement('hr', {
+      className: 'horizontal-rule-node',
+      style: {
+        border: 'none',
+        borderTop: '1px solid #ddd',
+        margin: '20px 0'
+      }
+    })
+  }
+}
+
+class TableComponent extends BaseComponent {
+  render() {
+    const headers = this.node.headers || []
+    const rows = this.node.rows || []
+    
+    const table = this.createElement('table', {
+      className: 'table-node markdown-table',
+      style: {
+        borderCollapse: 'collapse',
+        width: '100%',
+        margin: '16px 0'
+      }
+    })
+
+    if (headers.length > 0) {
+      const thead = this.createElement('thead')
+      const headerRow = this.createElement('tr')
+      
+      headers.forEach(header => {
+        const th = this.createElement('th', {
+          style: {
+            border: '1px solid #ddd',
+            padding: '8px',
+            backgroundColor: '#f5f5f5',
+            fontWeight: 'bold'
+          }
+        }, [header])
+        headerRow.appendChild(th)
+      })
+      
+      thead.appendChild(headerRow)
+      table.appendChild(thead)
+    }
+
+    const tbody = this.createElement('tbody')
+    rows.forEach(row => {
+      const tr = this.createElement('tr')
+      row.forEach(cell => {
+        const td = this.createElement('td', {
+          style: {
+            border: '1px solid #ddd',
+            padding: '8px'
+          }
+        }, [cell])
+        tr.appendChild(td)
+      })
+      tbody.appendChild(tr)
+    })
+    
+    table.appendChild(tbody)
+    return table
+  }
+}
+
+// 节点类型到组件的映射
+const NODE_COMPONENTS = {
+  text: TextComponent,
+  paragraph: ParagraphComponent,
+  heading: HeadingComponent,
+  code_block: CodeBlockComponent,
+  code: InlineCodeComponent,
+  list: ListComponent,
+  list_item: ListItemComponent,
+  blockquote: BlockquoteComponent,
+  table: TableComponent,
+  link: LinkComponent,
+  image: ImageComponent,
+  strong: StrongComponent,
+  emphasis: EmphasisComponent,
+  strikethrough: StrikethroughComponent,
+  horizontal_rule: HorizontalRuleComponent,
+}
+
+// 获取节点对应的组件
+function getNodeComponent(nodeType) {
+  return NODE_COMPONENTS[nodeType] || TextComponent
+}
+
+// 纯JS Markdown渲染器
+class PureJSMarkdownRenderer {
+  constructor(options = {}) {
+    this.options = {
+      onLinkClick: null,
+      onImageClick: null,
+      customComponents: {},
+      ...options
+    }
+  }
+
+  // 渲染AST到DOM
+  renderAST(ast, container) {
+    if (!container) {
+      throw new Error('Container element is required')
+    }
+
+    // 清空容器
+    container.innerHTML = ''
+
+    // 渲染每个根节点
+    if (Array.isArray(ast)) {
+      ast.forEach(node => this.renderNode(node, container))
+    } else {
+      this.renderNode(ast, container)
+    }
+  }
+
+  // 渲染单个节点
+  renderNode(node, container) {
+    if (!node || !node.type) {
+      console.warn('Invalid node:', node)
+      return
+    }
+
+    const Component = getNodeComponent(node.type)
+    const component = new Component(node, this.options)
+    const element = component.render()
+    
+    container.appendChild(element)
+  }
+
+  // 流式渲染
+  renderStreaming(ast, container, options = {}) {
+    const {
+      interval = 50,
+      chunkSize = 1,
+      onProgress = null,
+      onComplete = null
+    } = options
+
+    let currentIndex = 0
+    const totalNodes = Array.isArray(ast) ? ast.length : 1
+    const nodes = Array.isArray(ast) ? ast : [ast]
+
+    const renderNext = () => {
+      if (currentIndex >= totalNodes) {
+        if (onComplete) onComplete()
+        return
+      }
+
+      this.renderNode(nodes[currentIndex], container)
+      currentIndex++
+
+      if (onProgress) {
+        onProgress(currentIndex, totalNodes)
+      }
+
+      setTimeout(renderNext, interval)
+    }
+
+    renderNext()
+  }
+}
+
+// ==================== 简单Markdown解析器 ====================
+
+class SimpleMarkdownParser {
+  constructor() {
+    this.rules = {
+      heading: /^(#{1,6})\s+(.+)$/gm,
+      codeBlock: /^```(\w+)?\n([\s\S]*?)```$/gm,
+      inlineCode: /`([^`]+)`/g,
+      bold: /\*\*(.+?)\*\*/g,
+      italic: /\*(.+?)\*/g,
+      strikethrough: /~~(.+?)~~/g,
+      link: /\[([^\]]+)\]\(([^)]+)\)/g,
+      image: /!\[([^\]]*)\]\(([^)]+)\)/g,
+      list: /^(\s*)([-*+]|\d+\.)\s+(.+)$/gm,
+      blockquote: /^>\s*(.+)$/gm,
+      horizontalRule: /^---$/gm,
+      lineBreak: /\n\s*\n/g
+    }
+  }
+
+  parse(markdown) {
+    if (!markdown) return []
+    
+    let ast = []
+    let lines = markdown.split('\n')
+    let i = 0
+
+    while (i < lines.length) {
+      const line = lines[i]
+      
+      // 跳过空行
+      if (line.trim() === '') {
+        i++
+        continue
+      }
+
+      // 解析标题
+      if (line.match(/^#{1,6}\s+/)) {
+        const match = line.match(/^(#{1,6})\s+(.+)$/)
+        if (match) {
+          ast.push({
+            type: 'heading',
+            level: match[1].length,
+            children: [{ type: 'text', value: match[2] }]
+          })
+        }
+        i++
+        continue
+      }
+
+      // 解析代码块
+      if (line.startsWith('```')) {
+        const codeBlock = this.parseCodeBlock(lines, i)
+        if (codeBlock) {
+          ast.push(codeBlock.node)
+          i = codeBlock.nextIndex
+          continue
+        }
+      }
+
+      // 解析列表
+      if (line.match(/^(\s*)([-*+]|\d+\.)\s+/)) {
+        const list = this.parseList(lines, i)
+        if (list) {
+          ast.push(list.node)
+          i = list.nextIndex
+          continue
+        }
+      }
+
+      // 解析引用
+      if (line.startsWith('>')) {
+        const blockquote = this.parseBlockquote(lines, i)
+        if (blockquote) {
+          ast.push(blockquote.node)
+          i = blockquote.nextIndex
+          continue
+        }
+      }
+
+      // 解析水平线
+      if (line.match(/^---$/)) {
+        ast.push({
+          type: 'horizontal_rule'
+        })
+        i++
+        continue
+      }
+
+      // 解析段落
+      const paragraph = this.parseParagraph(lines, i)
+      if (paragraph) {
+        ast.push(paragraph.node)
+        i = paragraph.nextIndex
+        continue
+      }
+
+      i++
+    }
+
+    return ast
+  }
+
+  parseCodeBlock(lines, startIndex) {
+    const line = lines[startIndex]
+    const match = line.match(/^```(\w+)?$/)
+    if (!match) return null
+
+    const language = match[1] || ''
+    let code = ''
+    let i = startIndex + 1
+
+    while (i < lines.length && !lines[i].startsWith('```')) {
+      code += lines[i] + '\n'
+      i++
+    }
+
+    if (i >= lines.length) return null
+
+    return {
+      node: {
+        type: 'code_block',
+        language: language,
+        value: code.trim()
+      },
+      nextIndex: i + 1
+    }
+  }
+
+  parseList(lines, startIndex) {
+    const line = lines[startIndex]
+    const match = line.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
+    if (!match) return null
+
+    const ordered = /\d+\./.test(match[2])
+    const items = []
+    let i = startIndex
+
+    while (i < lines.length) {
+      const currentLine = lines[i]
+      const currentMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s+(.+)$/)
+      
+      if (!currentMatch) break
+
+      const content = this.parseInlineContent(currentMatch[3])
+      items.push({
+        type: 'list_item',
+        children: content
+      })
+
+      i++
+    }
+
+    return {
+      node: {
+        type: 'list',
+        ordered: ordered,
+        children: items
+      },
+      nextIndex: i
+    }
+  }
+
+  parseBlockquote(lines, startIndex) {
+    let content = ''
+    let i = startIndex
+
+    while (i < lines.length && lines[i].startsWith('>')) {
+      content += lines[i].replace(/^>\s*/, '') + '\n'
+      i++
+    }
+
+    return {
+      node: {
+        type: 'blockquote',
+        children: this.parseInlineContent(content.trim())
+      },
+      nextIndex: i
+    }
+  }
+
+  parseParagraph(lines, startIndex) {
+    let content = ''
+    let i = startIndex
+
+    while (i < lines.length && lines[i].trim() !== '' && !lines[i].match(/^#{1,6}\s+/) && !lines[i].startsWith('```') && !lines[i].match(/^(\s*)([-*+]|\d+\.)\s+/) && !lines[i].startsWith('>') && !lines[i].match(/^---$/)) {
+      content += lines[i] + '\n'
+      i++
+    }
+
+    if (content.trim() === '') return null
+
+    return {
+      node: {
+        type: 'paragraph',
+        children: this.parseInlineContent(content.trim())
+      },
+      nextIndex: i
+    }
+  }
+
+  parseInlineContent(text) {
+    if (!text) return [{ type: 'text', value: '' }]
+
+    let content = text
+    const nodes = []
+
+    // 处理内联代码
+    content = content.replace(/`([^`]+)`/g, (match, code) => {
+      nodes.push({ type: 'text', value: content.substring(0, content.indexOf(match)) })
+      nodes.push({ type: 'code', value: code })
+      content = content.substring(content.indexOf(match) + match.length)
+      return ''
+    })
+
+    // 处理粗体
+    content = content.replace(/\*\*(.+?)\*\*/g, (match, text) => {
+      const before = content.substring(0, content.indexOf(match))
+      if (before) nodes.push({ type: 'text', value: before })
+      nodes.push({
+        type: 'strong',
+        children: [{ type: 'text', value: text }]
+      })
+      content = content.substring(content.indexOf(match) + match.length)
+      return ''
+    })
+
+    // 处理斜体
+    content = content.replace(/\*(.+?)\*/g, (match, text) => {
+      const before = content.substring(0, content.indexOf(match))
+      if (before) nodes.push({ type: 'text', value: before })
+      nodes.push({
+        type: 'emphasis',
+        children: [{ type: 'text', value: text }]
+      })
+      content = content.substring(content.indexOf(match) + match.length)
+      return ''
+    })
+
+    // 处理删除线
+    content = content.replace(/~~(.+?)~~/g, (match, text) => {
+      const before = content.substring(0, content.indexOf(match))
+      if (before) nodes.push({ type: 'text', value: before })
+      nodes.push({
+        type: 'strikethrough',
+        children: [{ type: 'text', value: text }]
+      })
+      content = content.substring(content.indexOf(match) + match.length)
+      return ''
+    })
+
+    // 处理链接
+    content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+      const before = content.substring(0, content.indexOf(match))
+      if (before) nodes.push({ type: 'text', value: before })
+      nodes.push({
+        type: 'link',
+        url: url,
+        children: [{ type: 'text', value: text }]
+      })
+      content = content.substring(content.indexOf(match) + match.length)
+      return ''
+    })
+
+    // 处理图片
+    content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+      const before = content.substring(0, content.indexOf(match))
+      if (before) nodes.push({ type: 'text', value: before })
+      nodes.push({
+        type: 'image',
+        url: src,
+        alt: alt
+      })
+      content = content.substring(content.indexOf(match) + match.length)
+      return ''
+    })
+
+    // 添加剩余文本
+    if (content) {
+      nodes.push({ type: 'text', value: content })
+    }
+
+    return nodes.length > 0 ? nodes : [{ type: 'text', value: text }]
+  }
+}
+
+// ==================== 原有代码 ====================
 
 // 全局调试信息
 if (typeof window !== 'undefined') {
@@ -56,261 +801,46 @@ RE.callback('debug/RE.editor获取结果:' + (RE.editor ? '成功' : '失败'));
 
 // 流式 Markdown 处理器
 RE.streamMarkdownProcessor = {
-    md: null,
+    parser: null,
+    renderer: null,
     currentContent: '',
     isStreaming: false,
     
     init() {
         try {
-            // 检查markdown-it是否可用
-            if (typeof window.markdownit === 'undefined') {
-                RE.callback('debug/错误:markdown-it库未加载，使用备用渲染器');
-                this.initFallbackRenderer();
-                return;
-            }
+            RE.callback('debug/初始化纯JS Markdown渲染器');
             
-            // 初始化 markdown-it 实例
-            this.md = window.markdownit({
-                html: true,
-                linkify: true,
-                typographer: true,
-                breaks: true
+            // 初始化解析器和渲染器
+            this.parser = new SimpleMarkdownParser();
+            this.renderer = new PureJSMarkdownRenderer({
+                onLinkClick: (e, url) => {
+                    RE.callback('debug/链接点击: ' + url);
+                },
+                onImageClick: (src) => {
+                    RE.callback('debug/图片点击: ' + src);
+                }
             });
             
-            RE.callback('debug/markdown-it实例创建成功');
-            
-            // 添加插件（安全地添加，如果插件不存在则跳过）
-            try {
-                if (typeof window.markdownItEmoji !== 'undefined') {
-                    this.md.use(window.markdownItEmoji);
-                    RE.callback('debug/emoji插件加载成功');
-                } else {
-                    RE.callback('debug/emoji插件未找到，跳过');
-                }
-            } catch (e) {
-                RE.callback('debug/emoji插件加载失败: ' + e.message);
-            }
-            
-            try {
-                if (typeof window.markdownItCodeCopy !== 'undefined') {
-                    this.md.use(window.markdownItCodeCopy, {
-                        buttonClass: 'copy-code-button',
-                        buttonText: '复制代码'
-                    });
-                    RE.callback('debug/code-copy插件加载成功');
-                } else {
-                    RE.callback('debug/code-copy插件未找到，跳过');
-                }
-            } catch (e) {
-                RE.callback('debug/code-copy插件加载失败: ' + e.message);
-            }
-            
-            try {
-                if (typeof window.markdownItTable !== 'undefined') {
-                    this.md.use(window.markdownItTable);
-                    RE.callback('debug/table插件加载成功');
-                } else {
-                    RE.callback('debug/table插件未找到，跳过');
-                }
-            } catch (e) {
-                RE.callback('debug/table插件加载失败: ' + e.message);
-            }
-            
-            // 添加上标下标支持
-            try {
-                this.addSuperscriptSubscriptSupport();
-                RE.callback('debug/上标下标支持添加成功');
-            } catch (e) {
-                RE.callback('debug/上标下标支持添加失败: ' + e.message);
-            }
-            
-            try {
-                if (typeof window.markdownItKatex !== 'undefined') {
-                    this.md.use(window.markdownItKatex, {
-                        throwOnError: false,
-                        errorColor: '#cc0000'
-                    });
-                    RE.callback('debug/katex插件加载成功');
-                } else {
-                    RE.callback('debug/katex插件未找到，跳过');
-                }
-            } catch (e) {
-                RE.callback('debug/katex插件加载失败: ' + e.message);
-            }
-            
-            // 设置自定义渲染器
-            try {
-                this.setupCustomRenderers();
-                RE.callback('debug/自定义渲染器设置成功');
-            } catch (e) {
-                RE.callback('debug/自定义渲染器设置失败: ' + e.message);
-            }
-            
-            RE.callback('debug/Stream Markdown Processor 初始化完成');
-            console.log('✅ Stream Markdown Processor 初始化完成');
+            RE.callback('debug/纯JS Markdown渲染器初始化完成');
+            console.log('✅ 纯JS Markdown渲染器初始化完成');
         } catch (error) {
-            RE.callback('debug/初始化错误: ' + error.message);
-            console.error('❌ Stream Markdown Processor 初始化失败:', error);
-            // 如果初始化失败，使用备用渲染器
-            this.initFallbackRenderer();
+            RE.callback('debug/纯JS渲染器初始化错误: ' + error.message);
+            console.error('❌ 纯JS Markdown渲染器初始化失败:', error);
         }
-    },
-    
-    // 备用简单渲染器
-    initFallbackRenderer() {
-        RE.callback('debug/初始化备用渲染器');
-        this.md = {
-            render: (markdown) => {
-                // 简单的markdown渲染，至少能显示基本格式
-                let html = markdown
-                    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                    .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-                    .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-                    .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/`(.*?)`/g, '<code>$1</code>')
-                    .replace(/^\- (.*$)/gim, '<li>$1</li>')
-                    .replace(/^(\d+)\. (.*$)/gim, '<li>$2</li>')
-                    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
-                    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
-                    .replace(/^> (.*$)/gim, '<blockquote>$1</blockquote>')
-                    .replace(/\n\n/g, '</p><p>')
-                    .replace(/\n/g, '<br>');
-                
-                // 包装列表项
-                html = html.replace(/(<li>.*<\/li>)/g, '<ul>$1</ul>');
-                
-                // 包装段落
-                if (!html.startsWith('<')) {
-                    html = '<p>' + html + '</p>';
-                }
-                
-                RE.callback('debug/备用渲染器处理完成，HTML长度: ' + html.length);
-                return html;
-            }
-        };
-        RE.callback('debug/备用渲染器初始化完成');
-    },
-    
-    addSuperscriptSubscriptSupport() {
-        // 添加上标支持 (^text^)
-        this.md.inline.ruler.before('emphasis', 'superscript', (state, silent) => {
-            const start = state.pos;
-            const marker = state.src.charCodeAt(start);
-            
-            if (marker !== 0x5E /* ^ */) return false;
-            
-            const max = state.posMax;
-            let pos = start + 1;
-            
-            // 查找结束标记
-            while (pos < max) {
-                if (state.src.charCodeAt(pos) === 0x5E /* ^ */) {
-                    break;
-                }
-                pos++;
-            }
-            
-            if (pos >= max) return false;
-            
-            const content = state.src.slice(start + 1, pos);
-            if (content.length === 0) return false;
-            
-            if (!silent) {
-                const token = state.push('superscript_open', 'sup', 1);
-                token.markup = '^';
-                
-                const textToken = state.push('text', '', 0);
-                textToken.content = content;
-                
-                const closeToken = state.push('superscript_close', 'sup', -1);
-                closeToken.markup = '^';
-            }
-            
-            state.pos = pos + 1;
-            return true;
-        });
-        
-        // 添加下标支持 (~text~)
-        this.md.inline.ruler.before('emphasis', 'subscript', (state, silent) => {
-            const start = state.pos;
-            const marker = state.src.charCodeAt(start);
-            
-            if (marker !== 0x7E /* ~ */) return false;
-            
-            const max = state.posMax;
-            let pos = start + 1;
-            
-            // 查找结束标记
-            while (pos < max) {
-                if (state.src.charCodeAt(pos) === 0x7E /* ~ */) {
-                    break;
-                }
-                pos++;
-            }
-            
-            if (pos >= max) return false;
-            
-            const content = state.src.slice(start + 1, pos);
-            if (content.length === 0) return false;
-            
-            if (!silent) {
-                const token = state.push('subscript_open', 'sub', 1);
-                token.markup = '~';
-                
-                const textToken = state.push('text', '', 0);
-                textToken.content = content;
-                
-                const closeToken = state.push('subscript_close', 'sub', -1);
-                closeToken.markup = '~';
-            }
-            
-            state.pos = pos + 1;
-            return true;
-        });
-    },
-    
-    setupCustomRenderers() {
-        // 自定义代码块渲染
-        this.md.renderer.rules.fence = (tokens, idx, options, env, renderer) => {
-            const token = tokens[idx];
-            const info = token.info ? this.md.utils.unescapeAll(token.info).trim() : '';
-            const langName = info ? info.split(/\s+/g)[0] : '';
-            const langClass = options.langPrefix + langName;
-            
-            return `<pre class="code-block"><code class="${langClass}">${token.content}</code></pre>`;
-        };
-        
-        // 自定义表格渲染
-        this.md.renderer.rules.table_open = () => '<div class="table-wrapper"><table class="markdown-table">';
-        this.md.renderer.rules.table_close = () => '</table></div>';
-        
-        // 自定义链接渲染
-        this.md.renderer.rules.link_open = (tokens, idx, options, env, renderer) => {
-            const token = tokens[idx];
-            const href = token.attrGet('href');
-            if (href && href.startsWith('ai-callback://incomplete-link')) {
-                return '<a href="#" class="incomplete-link">';
-            }
-            return renderer.renderToken(tokens, idx, options);
-        };
     },
     
     updateMarkdown(newContent, isComplete) {
         RE.callback('debug/updateMarkdown被调用:长度=' + newContent.length + ',完成=' + isComplete);
-        RE.callback('debug/更新Markdown:长度=' + newContent.length + ',完成=' + isComplete + ',编辑器=' + (!!RE.editor) + ',md=' + (!!this.md));
+        RE.callback('debug/更新Markdown:长度=' + newContent.length + ',完成=' + isComplete + ',编辑器=' + (!!RE.editor) + ',parser=' + (!!this.parser) + ',renderer=' + (!!this.renderer));
         
         if (!RE.editor) {
             RE.callback('debug/错误:RE.editor不存在，无法更新Markdown');
             return;
         }
         
-        if (!this.md) {
-            RE.callback('debug/错误:markdown-it实例不存在，存储待处理内容');
-            // 如果markdown-it实例不存在，存储待处理的内容
+        if (!this.parser || !this.renderer) {
+            RE.callback('debug/错误:解析器或渲染器不存在，存储待处理内容');
+            // 如果解析器或渲染器不存在，存储待处理的内容
             if (isComplete) {
                 RE.pendingMarkdownContent = newContent;
                 RE.callback('debug/已存储待处理内容，长度: ' + newContent.length);
@@ -322,113 +852,18 @@ RE.streamMarkdownProcessor = {
             return;
         }
         
-        try {
-            this.currentContent += newContent;
-            this.isStreaming = !isComplete;
-            
-            // 处理不完整的 Markdown
-            let processedContent = this.currentContent;
-            if (!isComplete) {
-                processedContent = this.handleIncompleteMarkdown(processedContent);
-            }
-            
-            // 解析为 HTML
-            const html = this.md.render(processedContent);
-            RE.callback('debug/Markdown解析完成:HTML长度=' + html.length);
-            
-            // 更新显示
-            this.updateDisplay(html, isComplete);
-            
-            // 如果是流式结束，触发完成回调
-            if (isComplete) {
-                RE.callback('streamComplete');
-            }
-            
-            // 触发内容更新回调
-            RE.callback('contentUpdate');
-        } catch (error) {
-            RE.callback('debug/Markdown更新错误: ' + error.message);
-            console.error('❌ Markdown 更新失败:', error);
-        }
-    },
-    
-    handleIncompleteMarkdown(content) {
-        // 处理不完整的粗体
-        content = content.replace(/(\*\*)([^*]*?)$/g, (match, p1, p2) => {
-            if (p2 && !/^[\s_~*`]*$/.test(p2)) {
-                return p1 + p2 + '**';
-            }
-            return match;
-        });
-        
-        // 处理不完整的斜体
-        content = content.replace(/(\*)([^*]*?)$/g, (match, p1, p2) => {
-            if (p2 && !/^[\s_~*`]*$/.test(p2)) {
-                return p1 + p2 + '*';
-            }
-            return match;
-        });
-        
-        // 处理不完整的代码块
-        const backtickCount = (content.match(/```/g) || []).length;
-        if (backtickCount % 2 === 1) {
-            content += '```';
-        }
-        
-        // 处理不完整的链接
-        content = content.replace(/\[([^\]]*?)$/g, (match, p1) => {
-            if (p1 && !/^[\s]*$/.test(p1)) {
-                return match + '](ai-callback://incomplete-link)';
-            }
-            return match;
-        });
-        
-        // 处理不完整的列表
-        content = content.replace(/(\n|^)(\s*)([-*+]|\d+\.)\s*([^\n]*?)$/g, (match, p1, p2, p3, p4) => {
-            if (p4 && !/^[\s]*$/.test(p4)) {
-                return match;
-            }
-            return match;
-        });
-        
-        // 处理不完整的上下标
-        content = content.replace(/(\^)([^^]*?)$/g, (match, p1, p2) => {
-            if (p2 && !/^[\s]*$/.test(p2)) {
-                return p1 + p2 + '^';
-            }
-            return match;
-        });
-        
-        content = content.replace(/(~)([^~]*?)$/g, (match, p1, p2) => {
-            if (p2 && !/^[\s]*$/.test(p2)) {
-                return p1 + p2 + '~';
-            }
-            return match;
-        });
-        
-        return content;
-    },
-    
-    updateDisplay(html, isComplete) {
-        RE.callback('debug/更新显示:HTML长度=' + html.length + ',完成=' + isComplete + ',编辑器=' + (!!RE.editor));
-        
-        if (!RE.editor) {
-            RE.callback('debug/错误:编辑器元素未找到');
-            return;
-        }
+        // 更新当前内容
+        this.currentContent = newContent;
+        this.isStreaming = !isComplete;
         
         try {
-            // 添加流式更新样式
-            if (!isComplete) {
-                RE.editor.classList.add('streaming');
-                // 添加流式动画效果
-                this.addStreamingAnimation(RE.editor);
-            } else {
-                RE.editor.classList.remove('streaming');
-            }
+            // 解析Markdown为AST
+            const ast = this.parser.parse(newContent);
+            RE.callback('debug/Markdown解析为AST完成:节点数=' + ast.length);
             
-            RE.editor.innerHTML = html;
-            RE.callback('debug/HTML内容已设置到编辑器');
+            // 渲染AST到DOM
+            this.renderer.renderAST(ast, RE.editor);
+            RE.callback('debug/AST渲染到DOM完成');
             
             // 添加代码复制功能
             this.addCodeCopyListeners();
@@ -437,42 +872,42 @@ RE.streamMarkdownProcessor = {
             setTimeout(() => {
                 RE.scrollToBottom();
             }, 50);
+            
+            // 发送完成信号
+            if (isComplete) {
+                RE.callback('streamComplete');
+            }
+            
+            // 触发内容更新回调
+            RE.callback('contentUpdate');
         } catch (error) {
-            RE.callback('debug/显示更新错误: ' + error.message);
-            console.error('❌ 显示更新失败:', error);
+            RE.callback('debug/Markdown处理错误: ' + error.message);
+            console.error('❌ Markdown处理失败:', error);
         }
-    },
-    
-    // 添加流式渲染动画
-    addStreamingAnimation(element) {
-        element.classList.add('streaming-content');
-        // 移除动画类，以便下次可以重新添加
-        setTimeout(() => {
-            element.classList.remove('streaming-content');
-        }, 300);
     },
     
     reset() {
         console.log('🔄 重置流式处理器');
         this.currentContent = '';
         this.isStreaming = false;
-        RE.editor.innerHTML = '';
+        if (RE.editor) {
+            RE.editor.innerHTML = '';
+        }
         RE.callback('contentReset');
     },
     
     addCodeCopyListeners() {
         // 为所有代码块添加复制按钮事件监听
-        const copyButtons = RE.editor.querySelectorAll('.copy-code-button');
+        const copyButtons = RE.editor.querySelectorAll('.code-block-copy');
         copyButtons.forEach(button => {
             if (!button.hasAttribute('data-listener-added')) {
                 button.addEventListener('click', function() {
                     const codeBlock = this.parentElement.querySelector('code');
                     if (codeBlock) {
                         navigator.clipboard.writeText(codeBlock.textContent).then(() => {
-                            showCopySuccess(this);
+                            console.log('代码已复制到剪贴板');
                         }).catch(() => {
-                            fallbackCopyTextToClipboard(codeBlock.textContent);
-                            showCopySuccess(this);
+                            console.error('复制失败');
                         });
                     }
                 });
