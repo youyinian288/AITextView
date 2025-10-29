@@ -464,6 +464,13 @@
     display: none;
 }
 
+/* Base64图片特殊处理 - 确保正确显示 */
+.markdown-content img[src^="data:image/"] {
+    display: block !important;
+    background: transparent !important;
+    border: none !important;
+}
+
 /* 图片错误占位符 */
 .markdown-content .image-error {
     display: flex;

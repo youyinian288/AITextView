@@ -462,7 +462,455 @@ class PureJSMarkdownRenderer {
   }
 }
 
-// ==================== 简单Markdown解析器 ====================
+// ==================== Markdown-it 解析器 ====================
+
+class MarkdownItParser {
+  constructor(options = {}) {
+    this.options = {
+      html: true,
+      linkify: true,
+      typographer: true,
+      breaks: false,
+      ...options
+    }
+    
+    // 检查 markdown-it 是否可用
+    if (typeof window.markdownit === 'undefined') {
+      throw new Error('markdown-it library is not loaded')
+    }
+    
+    // 创建 markdown-it 实例
+    this.md = new window.markdownit(this.options)
+    
+    // 添加常用插件
+    this.setupPlugins()
+  }
+
+  setupPlugins() {
+    // 添加表格支持
+    if (typeof window.markdownItTable !== 'undefined') {
+      this.md.use(window.markdownItTable)
+    }
+    
+    // 添加代码复制支持
+    if (typeof window.markdownItCodeCopy !== 'undefined') {
+      this.md.use(window.markdownItCodeCopy)
+    }
+    
+    // 添加表情符号支持
+    if (typeof window.markdownItEmoji !== 'undefined') {
+      this.md.use(window.markdownItEmoji)
+    }
+    
+    // 添加 KaTeX 数学公式支持
+    if (typeof window.markdownItKatex !== 'undefined') {
+      this.md.use(window.markdownItKatex, {
+        throwOnError: false,
+        errorColor: '#cc0000'
+      })
+    }
+  }
+
+  parse(markdown) {
+    if (!markdown) return []
+    
+    try {
+      // 使用 markdown-it 解析为 tokens
+      const tokens = this.md.parse(markdown, {})
+      
+      // 将 tokens 转换为 AST
+      return this.tokensToAST(tokens)
+    } catch (error) {
+      console.error('Markdown parsing error:', error)
+      return []
+    }
+  }
+
+  tokensToAST(tokens) {
+    const ast = []
+    let i = 0
+
+    while (i < tokens.length) {
+      const token = tokens[i]
+      
+      switch (token.type) {
+        case 'heading_open':
+          ast.push(this.parseHeading(tokens, i))
+          i = this.findMatchingClose(tokens, i) + 1
+          break
+          
+        case 'paragraph_open':
+          ast.push(this.parseParagraph(tokens, i))
+          i = this.findMatchingClose(tokens, i) + 1
+          break
+          
+        case 'code_block':
+        case 'fence':
+          ast.push(this.parseCodeBlock(token))
+          i++
+          break
+          
+        case 'bullet_list_open':
+        case 'ordered_list_open':
+          const listResult = this.parseList(tokens, i)
+          ast.push(listResult.node)
+          i = listResult.nextIndex
+          break
+          
+        case 'blockquote_open':
+          const blockquoteResult = this.parseBlockquote(tokens, i)
+          ast.push(blockquoteResult.node)
+          i = blockquoteResult.nextIndex
+          break
+          
+        case 'hr':
+          ast.push({ type: 'horizontal_rule' })
+          i++
+          break
+          
+        case 'table_open':
+          const tableResult = this.parseTable(tokens, i)
+          ast.push(tableResult.node)
+          i = tableResult.nextIndex
+          break
+          
+        default:
+          i++
+      }
+    }
+
+    return ast
+  }
+
+  parseHeading(tokens, startIndex) {
+    const openToken = tokens[startIndex]
+    const level = parseInt(openToken.tag.slice(1))
+    
+    // 找到标题内容
+    let content = []
+    let i = startIndex + 1
+    
+    while (i < tokens.length && tokens[i].type !== 'heading_close') {
+      if (tokens[i].type === 'inline') {
+        content = this.parseInlineTokens(tokens[i].children || [])
+      }
+      i++
+    }
+    
+    return {
+      type: 'heading',
+      level: level,
+      children: content
+    }
+  }
+
+  parseParagraph(tokens, startIndex) {
+    let content = []
+    let i = startIndex + 1
+    
+    while (i < tokens.length && tokens[i].type !== 'paragraph_close') {
+      if (tokens[i].type === 'inline') {
+        content = this.parseInlineTokens(tokens[i].children || [])
+      }
+      i++
+    }
+    
+    return {
+      type: 'paragraph',
+      children: content
+    }
+  }
+
+  parseCodeBlock(token) {
+    const info = token.info || ''
+    const language = info.trim().split(/\s+/)[0] || ''
+    const code = token.content || ''
+    
+    return {
+      type: 'code_block',
+      language: language,
+      value: code
+    }
+  }
+
+  parseList(tokens, startIndex) {
+    const openToken = tokens[startIndex]
+    const ordered = openToken.type === 'ordered_list_open'
+    const items = []
+    let i = startIndex + 1
+    
+    while (i < tokens.length && tokens[i].type !== (ordered ? 'ordered_list_close' : 'bullet_list_close')) {
+      if (tokens[i].type === 'list_item_open') {
+        const itemResult = this.parseListItem(tokens, i)
+        items.push(itemResult.node)
+        i = itemResult.nextIndex
+      } else {
+        i++
+      }
+    }
+    
+    return {
+      node: {
+        type: 'list',
+        ordered: ordered,
+        children: items
+      },
+      nextIndex: i + 1
+    }
+  }
+
+  parseListItem(tokens, startIndex) {
+    let content = []
+    let i = startIndex + 1
+    
+    while (i < tokens.length && tokens[i].type !== 'list_item_close') {
+      if (tokens[i].type === 'paragraph_open') {
+        const paragraphResult = this.parseParagraph(tokens, i)
+        content = content.concat(paragraphResult.children)
+        i = this.findMatchingClose(tokens, i) + 1
+      } else if (tokens[i].type === 'inline') {
+        content = content.concat(this.parseInlineTokens(tokens[i].children || []))
+        i++
+      } else {
+        i++
+      }
+    }
+    
+    return {
+      node: {
+        type: 'list_item',
+        children: content
+      },
+      nextIndex: i + 1
+    }
+  }
+
+  parseBlockquote(tokens, startIndex) {
+    let content = []
+    let i = startIndex + 1
+    
+    while (i < tokens.length && tokens[i].type !== 'blockquote_close') {
+      if (tokens[i].type === 'paragraph_open') {
+        const paragraphResult = this.parseParagraph(tokens, i)
+        content = content.concat(paragraphResult.children)
+        i = this.findMatchingClose(tokens, i) + 1
+      } else if (tokens[i].type === 'inline') {
+        content = content.concat(this.parseInlineTokens(tokens[i].children || []))
+        i++
+      } else {
+        i++
+      }
+    }
+    
+    return {
+      node: {
+        type: 'blockquote',
+        children: content
+      },
+      nextIndex: i + 1
+    }
+  }
+
+  parseTable(tokens, startIndex) {
+    const headers = []
+    const rows = []
+    let i = startIndex + 1
+    
+    // 解析表头
+    if (tokens[i] && tokens[i].type === 'thead_open') {
+      i++ // thead_open
+      if (tokens[i] && tokens[i].type === 'tr_open') {
+        i++ // tr_open
+        while (i < tokens.length && tokens[i].type !== 'tr_close') {
+          if (tokens[i].type === 'th_open') {
+            i++ // th_open
+            if (tokens[i] && tokens[i].type === 'inline') {
+              const headerContent = this.parseInlineTokens(tokens[i].children || [])
+              headers.push(headerContent.map(node => node.value || '').join(''))
+            }
+            i++ // inline
+            i++ // th_close
+          } else {
+            i++
+          }
+        }
+        i++ // tr_close
+      }
+      i++ // thead_close
+    }
+    
+    // 解析表体
+    if (tokens[i] && tokens[i].type === 'tbody_open') {
+      i++ // tbody_open
+      while (i < tokens.length && tokens[i].type !== 'tbody_close') {
+        if (tokens[i].type === 'tr_open') {
+          const row = []
+          i++ // tr_open
+          while (i < tokens.length && tokens[i].type !== 'tr_close') {
+            if (tokens[i].type === 'td_open') {
+              i++ // td_open
+              if (tokens[i] && tokens[i].type === 'inline') {
+                const cellContent = this.parseInlineTokens(tokens[i].children || [])
+                row.push(cellContent.map(node => node.value || '').join(''))
+              }
+              i++ // inline
+              i++ // td_close
+            } else {
+              i++
+            }
+          }
+          rows.push(row)
+          i++ // tr_close
+        } else {
+          i++
+        }
+      }
+      i++ // tbody_close
+    }
+    
+    return {
+      node: {
+        type: 'table',
+        headers: headers,
+        rows: rows
+      },
+      nextIndex: i + 1
+    }
+  }
+
+  parseInlineTokens(tokens) {
+    const nodes = []
+    
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i]
+      
+      switch (token.type) {
+        case 'text':
+          nodes.push({ type: 'text', value: token.content })
+          break
+          
+        case 'code_inline':
+          nodes.push({ type: 'code', value: token.content })
+          break
+          
+        case 'strong_open':
+          const strongContent = this.collectInlineContent(tokens, i, 'strong_close')
+          nodes.push({
+            type: 'strong',
+            children: strongContent
+          })
+          i = this.findMatchingClose(tokens, i)
+          break
+          
+        case 'em_open':
+          const emContent = this.collectInlineContent(tokens, i, 'em_close')
+          nodes.push({
+            type: 'emphasis',
+            children: emContent
+          })
+          i = this.findMatchingClose(tokens, i)
+          break
+          
+        case 's_open':
+          const sContent = this.collectInlineContent(tokens, i, 's_close')
+          nodes.push({
+            type: 'strikethrough',
+            children: sContent
+          })
+          i = this.findMatchingClose(tokens, i)
+          break
+          
+        case 'link_open':
+          const linkResult = this.parseLink(tokens, i)
+          nodes.push(linkResult.node)
+          i = linkResult.nextIndex
+          break
+          
+        case 'image':
+          nodes.push({
+            type: 'image',
+            url: token.attrGet('src') || '',
+            alt: token.attrGet('alt') || '',
+            title: token.attrGet('title') || ''
+          })
+          break
+          
+        default:
+          // 对于其他类型的 token，尝试解析为文本
+          if (token.content) {
+            nodes.push({ type: 'text', value: token.content })
+          }
+      }
+    }
+    
+    return nodes
+  }
+
+  parseLink(tokens, startIndex) {
+    const openToken = tokens[startIndex]
+    const url = openToken.attrGet('href') || ''
+    const title = openToken.attrGet('title') || ''
+    
+    let content = []
+    let i = startIndex + 1
+    
+    while (i < tokens.length && tokens[i].type !== 'link_close') {
+      if (tokens[i].type === 'text') {
+        content.push({ type: 'text', value: tokens[i].content })
+      } else if (tokens[i].type === 'inline') {
+        content = content.concat(this.parseInlineTokens(tokens[i].children || []))
+      }
+      i++
+    }
+    
+    return {
+      node: {
+        type: 'link',
+        url: url,
+        title: title,
+        children: content
+      },
+      nextIndex: i + 1
+    }
+  }
+
+  collectInlineContent(tokens, startIndex, closeType) {
+    const content = []
+    let i = startIndex + 1
+    
+    while (i < tokens.length && tokens[i].type !== closeType) {
+      if (tokens[i].type === 'text') {
+        content.push({ type: 'text', value: tokens[i].content })
+      } else if (tokens[i].type === 'inline') {
+        content.push(...this.parseInlineTokens(tokens[i].children || []))
+      }
+      i++
+    }
+    
+    return content
+  }
+
+  findMatchingClose(tokens, startIndex) {
+    const openToken = tokens[startIndex]
+    const openType = openToken.type
+    const closeType = openType.replace('_open', '_close')
+    let level = 1
+    let i = startIndex + 1
+    
+    while (i < tokens.length && level > 0) {
+      if (tokens[i].type === openType) {
+        level++
+      } else if (tokens[i].type === closeType) {
+        level--
+      }
+      i++
+    }
+    
+    return i - 1
+  }
+}
+
+// ==================== 简单Markdown解析器（备用） ====================
 
 class SimpleMarkdownParser {
   constructor() {
@@ -805,13 +1253,32 @@ RE.streamMarkdownProcessor = {
     renderer: null,
     currentContent: '',
     isStreaming: false,
+    useMarkdownIt: false,
     
     init() {
         try {
-            RE.callback('debug/初始化纯JS Markdown渲染器');
+            RE.callback('debug/初始化Markdown渲染器');
             
-            // 初始化解析器和渲染器
-            this.parser = new SimpleMarkdownParser();
+            // 尝试使用 markdown-it 解析器
+            try {
+                this.parser = new MarkdownItParser({
+                    html: true,
+                    linkify: true,
+                    typographer: true,
+                    breaks: false
+                });
+                this.useMarkdownIt = true;
+                RE.callback('debug/使用 markdown-it 解析器');
+                console.log('✅ 使用 markdown-it 解析器');
+            } catch (markdownItError) {
+                // 如果 markdown-it 不可用，回退到简单解析器
+                RE.callback('debug/markdown-it 不可用，使用简单解析器: ' + markdownItError.message);
+            // this.parser = new SimpleMarkdownParser();
+                this.useMarkdownIt = false;
+                console.log('⚠️ markdown-it 不可用，使用简单解析器');
+            }
+            
+            // 初始化渲染器
             this.renderer = new PureJSMarkdownRenderer({
                 onLinkClick: (e, url) => {
                     RE.callback('debug/链接点击: ' + url);
@@ -821,11 +1288,11 @@ RE.streamMarkdownProcessor = {
                 }
             });
             
-            RE.callback('debug/纯JS Markdown渲染器初始化完成');
-            console.log('✅ 纯JS Markdown渲染器初始化完成');
+            RE.callback('debug/Markdown渲染器初始化完成，使用解析器: ' + (this.useMarkdownIt ? 'markdown-it' : 'simple'));
+            console.log('✅ Markdown渲染器初始化完成');
         } catch (error) {
-            RE.callback('debug/纯JS渲染器初始化错误: ' + error.message);
-            console.error('❌ 纯JS Markdown渲染器初始化失败:', error);
+            RE.callback('debug/渲染器初始化错误: ' + error.message);
+            console.error('❌ Markdown渲染器初始化失败:', error);
         }
     },
     
@@ -852,14 +1319,20 @@ RE.streamMarkdownProcessor = {
             return;
         }
         
-        // 更新当前内容
-        this.currentContent = newContent;
+        // 更新当前内容 - 累积流式内容
+        if (isComplete) {
+            // 如果是完整内容，直接替换
+            this.currentContent = newContent;
+        } else {
+            // 如果是流式内容，累积到现有内容
+            this.currentContent += newContent;
+        }
         this.isStreaming = !isComplete;
         
         try {
-            // 解析Markdown为AST
-            const ast = this.parser.parse(newContent);
-            RE.callback('debug/Markdown解析为AST完成:节点数=' + ast.length);
+            // 解析累积的Markdown为AST
+            const ast = this.parser.parse(this.currentContent);
+            RE.callback('debug/Markdown解析为AST完成:节点数=' + ast.length + ',内容长度=' + this.currentContent.length);
             
             // 渲染AST到DOM
             this.renderer.renderAST(ast, RE.editor);
@@ -1015,10 +1488,9 @@ RE.init = function() {
         return;
     }
     
-    // 检查markdown-it是否可用
+    // 检查markdown-it是否可用（可选）
     if (typeof window.markdownit === 'undefined') {
-        RE.callback('debug/错误:markdown-it库未加载');
-        return;
+        RE.callback('debug/警告:markdown-it库未加载，将使用简单解析器');
     }
     
     try {
@@ -1081,9 +1553,9 @@ function waitForDependencies() {
                 ', katex=' + dependencies.markdownItKatex + 
                 ', table=' + dependencies.markdownItTable);
     
-    // 如果检查次数超过限制，强制初始化（使用备用渲染器）
+    // 如果检查次数超过限制，强制初始化（使用简单解析器）
     if (dependencyCheckCount >= maxDependencyChecks) {
-        RE.callback('debug/依赖检查超时，强制初始化（将使用备用渲染器）');
+        RE.callback('debug/依赖检查超时，强制初始化（将使用简单解析器）');
         RE.init();
         return;
     }

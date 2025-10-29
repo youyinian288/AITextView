@@ -180,7 +180,15 @@ public enum JSError: Error, CustomStringConvertible {
     ///   - isComplete: 是否为完整内容（流式结束）
     public func updateMarkdownStream(_ markdown: String, isComplete: Bool = false) {
         print("📝 AITextView.updateMarkdownStream 被调用，片段长度: \(markdown.count), 是否完成: \(isComplete)")
-        markdownBuffer += markdown
+        
+        // 累积内容到缓冲区
+        if isComplete {
+            // 如果是完整内容，直接替换缓冲区
+            markdownBuffer = markdown
+        } else {
+            // 如果是流式内容，累积到缓冲区
+            markdownBuffer += markdown
+        }
         isStreaming = !isComplete
         
         // 转义 JavaScript 字符串中的特殊字符
@@ -261,6 +269,27 @@ public enum JSError: Error, CustomStringConvertible {
     /// 是否正在流式更新
     public var isCurrentlyStreaming: Bool {
         return isStreaming
+    }
+    
+    /// 测试Base64图片渲染
+    public func testBase64Image() {
+        let testMarkdown = """
+        # Base64图片测试
+        
+        ## 简单圆形
+        ![Test Circle](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIC8+Cjwvc3ZnPgo=)
+        
+        ## 彩色矩形
+        ![Test Rectangle](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzQyODVmNCIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5CYXNlNjQgSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==)
+        
+        ## 1x1像素图片
+        ![Test Pixel](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==)
+        
+        测试完成！
+        """
+        
+        print("🧪 开始Base64图片测试")
+        setMarkdown(testMarkdown)
     }
     
     
