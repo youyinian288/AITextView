@@ -433,8 +433,10 @@ RE.streamMarkdownProcessor = {
             // 添加代码复制功能
             this.addCodeCopyListeners();
             
-            // 滚动到底部
-            RE.scrollToBottom();
+            // 延迟滚动到底部，确保DOM更新完成
+            setTimeout(() => {
+                RE.scrollToBottom();
+            }, 50);
         } catch (error) {
             RE.callback('debug/显示更新错误: ' + error.message);
             console.error('❌ 显示更新失败:', error);
@@ -500,14 +502,32 @@ RE.clear = function() {
 
 // 滚动控制方法
 RE.scrollToBottom = function() {
-    const container = RE.editor.parentElement;
-    if (container) {
-        container.scrollTo({
-            top: container.scrollHeight,
+    RE.callback('debug/开始滚动到底部');
+    
+    // 在WebView环境中，我们需要滚动整个页面
+    // 使用多种方法确保滚动成功
+    try {
+        // 方法1: 滚动到页面底部
+        window.scrollTo({
+            top: document.body.scrollHeight,
             behavior: 'smooth'
         });
-    } else {
-        RE.editor.scrollTop = RE.editor.scrollHeight;
+        
+        // 方法2: 使用document.documentElement
+        document.documentElement.scrollTop = document.documentElement.scrollHeight;
+        
+        // 方法3: 滚动到编辑器底部
+        if (RE.editor) {
+            RE.editor.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'end' 
+            });
+        }
+        
+        RE.callback('debug/滚动到底部完成');
+    } catch (error) {
+        RE.callback('debug/滚动失败: ' + error.message);
+        console.error('❌ 滚动失败:', error);
     }
 };
 

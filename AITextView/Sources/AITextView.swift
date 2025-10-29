@@ -388,6 +388,8 @@ public enum JSError: Error, CustomStringConvertible {
     /// 滚动到编辑器底部（用于AI内容生成时）
     /// - Parameter animated: 是否使用动画滚动，默认为true
     public func scrollToBottom(animated: Bool = true) {
+        print("📜 开始滚动到底部，动画: \(animated)")
+        
         // 使用JavaScript进行平滑滚动，这样更准确
         let jsCode = """
         if (window.RE && window.RE.scrollToBottom) {
@@ -399,14 +401,17 @@ public enum JSError: Error, CustomStringConvertible {
         
         webView.evaluateJavaScript(jsCode) { result, error in
             if let error = error {
-                print("❌ 滚动失败: \(error)")
+                print("❌ JavaScript滚动失败: \(error)")
                 // 备用方案：使用原生滚动
                 DispatchQueue.main.async {
                     let scrollView = self.webView.scrollView
                     let maxOffsetY = max(0, scrollView.contentSize.height - scrollView.bounds.height)
                     let offset = CGPoint(x: 0, y: maxOffsetY)
+                    print("📜 使用原生滚动，目标位置: \(offset)")
                     scrollView.setContentOffset(offset, animated: animated)
                 }
+            } else {
+                print("✅ JavaScript滚动执行成功")
             }
         }
     }
