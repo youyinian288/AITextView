@@ -77,6 +77,16 @@ class AIStreamTestViewController: UIViewController {
         
         上标: H~2~O | 下标: x^2^ + y^2^ = z^2^
         
+        ## 🎨 富文本标签测试
+        
+        <u>下划线文本 Underlined Text</u> | <mark>高亮文本 Highlighted Text</mark>
+        
+        <del>删除线文本 Deleted Text</del> | <ins>插入线文本 Inserted Text</ins>
+        
+        <small>小字体文本 Small Text</small> | <big>大字体文本 Big Text</big>
+        
+        <kbd>Ctrl</kbd> + <kbd>C</kbd> | <var>变量 Variable</var> | <samp>示例输出 Sample Output</samp>
+        
         ## 📋 标题级别测试
         
         # 一级标题 H1
@@ -150,15 +160,96 @@ class AIStreamTestViewController: UIViewController {
         
         其他符号: © ® ™ § ¶ † ‡ • ◦ ◊
         
+        ## 🖼️ 图片渲染测试
+        
+        ### SVG 图片测试
+        ![SVG Logo](https://upload.wikimedia.org/wikipedia/commons/0/02/SVG_logo.svg)
+        
+        ### 网络图片测试
+        ![GitHub Logo](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png)
+        
+        ![Apple Logo](https://developer.apple.com/assets/elements/icons/swiftui/swiftui-96x96_2x.png)
+        
+        ### Base64 图片测试
+        ![Base64 Image](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIC8+Cjwvc3ZnPgo=)
+        
+        ### 图片尺寸测试
+        ![Small Image](https://via.placeholder.com/150x100/FF6B6B/FFFFFF?text=Small)
+        ![Medium Image](https://via.placeholder.com/300x200/4ECDC4/FFFFFF?text=Medium)
+        ![Large Image](https://via.placeholder.com/600x400/45B7D1/FFFFFF?text=Large)
+        
         ## 🔧 代码测试
         
-        内联代码: `console.log("Hello World")`
+        ### 内联代码
+        内联代码: `console.log("Hello World")` | `let name = "Swift"` | `print("AITextView")`
         
-        代码块示例：
-        ```markdown
+        ### 基础代码块
+        ```swift
+        func fibonacci(_ n: Int) -> Int {
+            if n <= 1 { return n }
+            return fibonacci(n - 1) + fibonacci(n - 2)
+        }
+        ```
+        
+        ### 多语言代码块
+        ```javascript
         function fibonacci(n) {
             if (n <= 1) return n;
             return fibonacci(n - 1) + fibonacci(n - 2);
+        }
+        ```
+        
+        ```python
+        def fibonacci(n):
+            if n <= 1:
+                return n
+            return fibonacci(n - 1) + fibonacci(n - 2)
+        ```
+        
+        ```java
+        public class Fibonacci {
+            public static int fibonacci(int n) {
+                if (n <= 1) return n;
+                return fibonacci(n - 1) + fibonacci(n - 2);
+            }
+        }
+        ```
+        
+        ### 长代码块测试
+        ```swift
+        import Foundation
+        
+        class AITextView: UIView {
+            private var webView: WKWebView!
+            private var markdownProcessor: MarkdownProcessor!
+            
+            override init(frame: CGRect) {
+                super.init(frame: frame)
+                setupWebView()
+                setupMarkdownProcessor()
+            }
+            
+            required init?(coder: NSCoder) {
+                super.init(coder: coder)
+                setupWebView()
+                setupMarkdownProcessor()
+            }
+            
+            private func setupWebView() {
+                let config = WKWebViewConfiguration()
+                webView = WKWebView(frame: bounds, configuration: config)
+                webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                addSubview(webView)
+            }
+            
+            private func setupMarkdownProcessor() {
+                markdownProcessor = MarkdownProcessor()
+            }
+            
+            func loadMarkdown(_ markdown: String) {
+                let html = markdownProcessor.process(markdown)
+                webView.loadHTMLString(html, baseURL: nil)
+            }
         }
         ```
 
@@ -792,6 +883,7 @@ class AIStreamTestViewController: UIViewController {
         🚀 **模拟AI流式输出测试完成！**
         
         💡 **提示**: 您可以调整自动滚动开关来测试滚动行为，使用"停止生成"按钮来中断流式输出。
+        
         """
     }
     

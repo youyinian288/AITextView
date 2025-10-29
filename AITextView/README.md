@@ -40,14 +40,13 @@ graph TD
     
     subgraph "WebView层"
         J --> O[WKWebView]
-        O --> P[rich_editor.html]
+        O --> P[stream_markdown_editor.html]
     end
     
     subgraph "前端实现层"
-        P --> Q[rich_editor.js<br/>JavaScript逻辑]
-        P --> R[style.css<br/>样式定义]
-        P --> S[normalize.css<br/>样式重置]
-        Q --> T[contentEditable div<br/>可编辑区域]
+        P --> Q[markdown-it<br/>Markdown渲染]
+        P --> R[markdown.css<br/>样式定义]
+        Q --> T[markdown-content div<br/>内容显示区域]
     end
     
     subgraph "资源层"
@@ -86,9 +85,9 @@ graph TD
 - `RichEditorWebView`: WKWebView的简单包装器
 
 #### 4. **前端实现层**
-- `rich_editor.html`: 基础HTML结构，包含可编辑的div
-- `rich_editor.js`: JavaScript逻辑，实现所有富文本编辑功能
-- `style.css + normalize.css`: 样式定义和浏览器兼容性
+- `stream_markdown_editor.html`: 基础HTML结构，包含Markdown渲染区域
+- `markdown-it`: JavaScript库，实现Markdown到HTML的转换
+- `markdown.css`: 样式定义，美化Markdown渲染效果
 
 ### 🔄 关键工作原理
 
@@ -158,13 +157,13 @@ graph TD
 ### **第五步：理解前端实现**
 
 **文件：**
-- `Sources/Resources/editor/rich_editor.html` - HTML结构
-- `Sources/Resources/editor/rich_editor.js` - JavaScript逻辑
+- `Sources/Resources/stream_markdown_editor.html` - HTML结构和Markdown渲染
+- `Sources/Resources/markdown.css` - Markdown样式定义
 
 理解：
-- 💻 contentEditable 如何工作
+- 📝 Markdown-it 如何工作
 - 🌉 JavaScript-Swift 通信桥接
-- ⚡ 命令队列机制
+- ⚡ 流式Markdown渲染机制
 
 ### **第六步：学习SwiftUI包装层**
 
@@ -294,9 +293,9 @@ RichEditorView: 核心编辑器组件，继承自UIView
 RichEditorToolbar: 可滚动的工具栏，包含各种编辑操作按钮
 RichEditorWebView: WKWebView的简单包装器
 4. 前端实现层
-rich_editor.html: 基础HTML结构，包含可编辑的div
-rich_editor.js: JavaScript逻辑，实现所有富文本编辑功能
-style.css + normalize.css: 样式定义和浏览器兼容性
+stream_markdown_editor.html: 基础HTML结构，包含Markdown渲染区域
+markdown-it: JavaScript库，实现Markdown到HTML的转换
+markdown.css: 样式定义，美化Markdown渲染效果
 🔄 关键工作原理
 JavaScript-Native通信机制:
 Swift → JavaScript: 通过webView.evaluateJavaScript()调用JS函数
@@ -350,12 +349,12 @@ RichEditorToolbarDelegate: 处理需要原生UI的操作（颜色选择、图片
 🎨 处理复杂操作（颜色选择等）
 第五步：理解前端实现
 文件：
-Sources/Resources/editor/rich_editor.html - HTML结构
-Sources/Resources/editor/rich_editor.js - JavaScript逻辑
+Sources/Resources/stream_markdown_editor.html - HTML结构和Markdown渲染
+Sources/Resources/markdown.css - Markdown样式定义
 理解：
-💻 contentEditable 如何工作
+📝 Markdown-it 如何工作
 🌉 JavaScript-Swift 通信桥接
-⚡ 命令队列机制
+⚡ 流式Markdown渲染机制
 第六步：学习SwiftUI包装层
 文件：Sources/SwiftUIRichEditor.swift
 理解如何：

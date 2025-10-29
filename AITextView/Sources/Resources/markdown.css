@@ -86,37 +86,181 @@
 }
 
 .markdown-content code {
-    background-color: #f6f8fa;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
     border-radius: 6px;
-    font-size: 85%;
+    font-size: 0.875rem;
     margin: 0;
+    padding: 0.25em 0.5em;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    color: #667eea;
+    font-weight: 500;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+/* 上标下标样式 */
+.markdown-content sup {
+    font-size: 0.75em;
+    line-height: 0;
+    position: relative;
+    vertical-align: super;
+    color: #24292f;
+}
+
+.markdown-content sub {
+    font-size: 0.75em;
+    line-height: 0;
+    position: relative;
+    vertical-align: sub;
+    color: #24292f;
+}
+
+/* 下划线样式 */
+.markdown-content u {
+    text-decoration: underline;
+    color: #24292f;
+}
+
+/* 高亮样式 */
+.markdown-content mark {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 0.1em 0.2em;
+    border-radius: 0.2em;
+}
+
+/* 删除线样式 */
+.markdown-content del {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+/* 插入线样式 */
+.markdown-content ins {
+    text-decoration: underline;
+    color: #28a745;
+    background-color: #d4edda;
+    padding: 0.1em 0.2em;
+    border-radius: 0.2em;
+}
+
+/* 小字体样式 */
+.markdown-content small {
+    font-size: 0.875em;
+    color: #6c757d;
+}
+
+/* 大字体样式 */
+.markdown-content big {
+    font-size: 1.25em;
+    color: #24292f;
+}
+
+/* 键盘输入样式 */
+.markdown-content kbd {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    color: #495057;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875em;
     padding: 0.2em 0.4em;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, 'Courier New', monospace;
-    color: #d73a49;
-    border: 1px solid #d0d7de;
+}
+
+/* 变量样式 */
+.markdown-content var {
+    font-style: italic;
+    color: #e83e8c;
+    font-family: 'Courier New', monospace;
+}
+
+/* 示例输出样式 */
+.markdown-content samp {
+    font-family: 'Courier New', monospace;
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 0.1em 0.3em;
+    border-radius: 0.2em;
 }
 
 /* 代码块 */
-.markdown-content .code-block {
-    background-color: #f6f8fa;
-    border-radius: 6px;
-    font-size: 85%;
-    line-height: 1.45;
+.markdown-content pre {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    font-size: 0.875rem;
+    line-height: 1.6;
     overflow: auto;
-    padding: 16px;
-    margin: 1em 0;
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, 'Courier New', monospace;
-    border: 1px solid #d0d7de;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     position: relative;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
 
-.markdown-content .code-block code {
+.markdown-content pre::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px 12px 0 0;
+}
+
+.markdown-content pre code {
     background: none;
     border: none;
     padding: 0;
     margin: 0;
     color: #24292f;
     font-size: 100%;
+    white-space: pre;
+    word-wrap: normal;
+    overflow-wrap: normal;
+}
+
+/* 代码块标题 */
+.markdown-content .code-block-header {
+    background-color: #f1f3f4;
+    border-bottom: 1px solid #d0d7de;
+    padding: 8px 16px;
+    margin: -16px -16px 16px -16px;
+    border-radius: 6px 6px 0 0;
+    font-size: 12px;
+    color: #656d76;
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.markdown-content .code-block-header .language {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, 'Courier New', monospace;
+}
+
+/* 行号支持 */
+.markdown-content .code-block-with-lines {
+    display: flex;
+}
+
+.markdown-content .code-lines {
+    background-color: #f8f9fa;
+    border-right: 1px solid #d0d7de;
+    padding: 16px 8px;
+    margin: -16px 0 -16px -16px;
+    color: #656d76;
+    font-size: 12px;
+    line-height: 1.45;
+    user-select: none;
+    min-width: 3em;
+    text-align: right;
+}
+
+.markdown-content .code-content {
+    flex: 1;
+    padding: 16px;
+    margin: -16px -16px -16px 0;
 }
 
 /* 代码复制按钮 */
@@ -251,12 +395,178 @@
     border-radius: 1px;
 }
 
-/* 图片 */
+/* 图片渲染 - 借鉴Vue项目设计 */
 .markdown-content img {
     max-width: 100%;
     height: auto;
+    border-radius: 8px;
+    margin: 1em 0;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #f8f9fa;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.markdown-content img:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 图片容器 - 类似Vue项目的figure设计 */
+.markdown-content .image-container {
+    text-align: center;
+    margin: 2em 0;
+    position: relative;
+}
+
+.markdown-content .image-container img {
+    margin: 0 auto;
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* 图片加载状态 */
+.markdown-content img[data-loading="true"] {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* SVG 图片特殊处理 */
+.markdown-content img[src*=".svg"],
+.markdown-content img[src*="data:image/svg"] {
+    background: transparent;
+    border: none;
+    min-height: 2rem;
+}
+
+/* Base64 图片处理 */
+.markdown-content img[src^="data:image/"] {
+    background: transparent;
+}
+
+/* 网络图片加载状态 */
+.markdown-content img[src^="http"] {
+    background: #f8f9fa;
+}
+
+/* 图片加载失败时的样式 */
+.markdown-content img:not([src]),
+.markdown-content img[src=""],
+.markdown-content img[src*="error"] {
+    display: none;
+}
+
+/* 图片错误占位符 */
+.markdown-content .image-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin: 1em 0;
+}
+
+.markdown-content .image-error::before {
+    content: "🖼️";
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+}
+
+/* 流式渲染动画效果 - 借鉴Vue项目 */
+.markdown-content .streaming-content {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 打字机效果 */
+.markdown-content .typing-cursor::after {
+    content: '|';
+    animation: blink 1s infinite;
+    color: #667eea;
+    font-weight: 100;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* 代码块加载状态 */
+.markdown-content pre[data-loading="true"] {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: code-shimmer 1.5s infinite;
+}
+
+@keyframes code-shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* 代码块语言标签 */
+.markdown-content pre::after {
+    content: attr(data-language);
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    padding: 0.25rem 0.75rem;
     border-radius: 6px;
-    margin: 0.5em 0;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* 代码块复制按钮 */
+.markdown-content pre .copy-button {
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    opacity: 0;
+    transform: translateY(-2px);
+}
+
+.markdown-content pre:hover .copy-button {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.markdown-content pre .copy-button:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
 }
 
 /* 数学公式 */
@@ -319,13 +629,30 @@
         border-color: #30363d;
     }
     
-    .markdown-content .code-block {
+    .markdown-content sup,
+    .markdown-content sub {
+        color: #c9d1d9;
+    }
+    
+    .markdown-content pre {
         background-color: #161b22;
         border-color: #30363d;
     }
     
-    .markdown-content .code-block code {
+    .markdown-content pre code {
         color: #c9d1d9;
+    }
+    
+    .markdown-content .code-block-header {
+        background-color: #21262d;
+        border-bottom-color: #30363d;
+        color: #8b949e;
+    }
+    
+    .markdown-content .code-lines {
+        background-color: #21262d;
+        border-right-color: #30363d;
+        color: #8b949e;
     }
     
     .markdown-content .copy-code-button {
@@ -395,9 +722,25 @@
     .markdown-content h2 { font-size: 1.5em; }
     .markdown-content h3 { font-size: 1.25em; }
     
-    .markdown-content .code-block {
+    .markdown-content pre {
         padding: 12px;
         font-size: 80%;
+        margin: 0.8em 0;
+    }
+    
+    .markdown-content .code-block-header {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+    
+    .markdown-content .code-lines {
+        padding: 12px 6px;
+        font-size: 11px;
+        min-width: 2.5em;
+    }
+    
+    .markdown-content .code-content {
+        padding: 12px;
     }
     
     .markdown-content .table-wrapper {

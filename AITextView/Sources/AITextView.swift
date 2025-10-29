@@ -41,7 +41,7 @@ public enum JSError: Error, CustomStringConvertible {
 
 /// AITextView是一个UIView，用于显示AI流式输出的HTML内容
 // 定义一个公开的类 AITextView，继承自 UIView，并遵循多个协议
-@objcMembers open class AITextView: UIView, WKNavigationDelegate {
+@objcMembers open class AITextView: UIView, WKNavigationDelegate, UIScrollViewDelegate {
     /// 将接收回调的代理，当某些操作完成时
     // 定义一个弱引用的代理，用于接收 AITextViewDelegate 的回调
     open weak var delegate: AITextViewDelegate?
@@ -61,11 +61,19 @@ public enum JSError: Error, CustomStringConvertible {
     // 定义一个私有布尔值，标记编辑器是否已加载
     private var isEditorLoaded = false
     
-    /// 流式 Markdown 处理器
-    private var streamMarkdownProcessor: StreamMarkdownProcessor?
+    /// 当前 Markdown 内容缓冲区
+    private var markdownBuffer: String = ""
+    /// 是否正在流式更新
+    private var isStreaming: Bool = false
     
     /// 是否启用自动滚动（流式输出时）
     public var isAutoScrollEnabled: Bool = true
+
+        open var isScrollEnabled: Bool = true {
+        didSet {
+            webView.scrollView.isScrollEnabled = isScrollEnabled
+        }
+    }
         
     /// 当前 Markdown 内容
     // 定义一个字符串，用于设置或获取编辑器的 Markdown 内容
@@ -100,7 +108,12 @@ public enum JSError: Error, CustomStringConvertible {
         // 调用 setup 方法进行配置
         setup()
     }
-    
+    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        // We use this to keep the scroll view from changing its offset when the keyboard comes up
+        if !isScrollEnabled {
+            scrollView.bounds = webView.bounds
+        }
+    }
     // 私有的 setup 方法，用于配置视图
     private func setup() {
         // configure webview
@@ -121,8 +134,6 @@ public enum JSError: Error, CustomStringConvertible {
         webView.scrollView.clipsToBounds = false
         // 将 webView 添加到当前视图
         addSubview(webView)
-        // 初始化流式 Markdown 处理器
-        streamMarkdownProcessor = StreamMarkdownProcessor(webView: webView)
         // 加载流式 Markdown 编辑器 HTML 文件
         loadRichEditorView()
     }
@@ -168,7 +179,40 @@ public enum JSError: Error, CustomStringConvertible {
     ///   - markdown: 新的 Markdown 内容片段
     ///   - isComplete: 是否为完整内容（流式结束）
     public func updateMarkdownStream(_ markdown: String, isComplete: Bool = false) {
-        streamMarkdownProcessor?.updateMarkdownStream(markdown, isComplete: isComplete)
+        print("📝 AITextView.updateMarkdownStream 被调用，片段长度: \(markdown.count), 是否完成: \(isComplete)")
+        markdownBuffer += markdown
+        isStreaming = !isComplete
+        
+        // 转义 JavaScript 字符串中的特殊字符
+        let escapedMarkdown = markdown
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\t", with: "\\t")
+        
+        // 调用 JavaScript 进行 markdown-it 解析
+        let jsCode = """
+        if (typeof window.jsLoaded !== 'undefined') {
+            console.log('JavaScript已加载');
+        } else {
+            console.log('JavaScript未加载');
+        }
+        if (window.RE && window.RE.streamMarkdownProcessor) {
+            window.RE.streamMarkdownProcessor.updateMarkdown('\(escapedMarkdown)', \(isComplete));
+        } else {
+            console.log('RE对象或streamMarkdownProcessor不存在');
+        }
+        """
+        
+        print("🌐 执行JavaScript代码: \(jsCode)")
+        runJS(jsCode) { [weak self] result in
+            if isComplete {
+                self?.isStreaming = false
+                print("✅ 流式输出完成，保持内容显示")
+            }
+        }
         
         // 如果启用自动滚动，在流式更新时自动滚动到底部
         if isAutoScrollEnabled && !markdown.isEmpty {
@@ -184,7 +228,8 @@ public enum JSError: Error, CustomStringConvertible {
         
         if isEditorLoaded {
             print("✅ WebView已加载，直接设置内容")
-            streamMarkdownProcessor?.setMarkdown(markdown)
+            resetMarkdown()
+            updateMarkdownStream(markdown, isComplete: true)
         } else {
             print("⏳ WebView未加载，等待加载完成后设置")
             // WebView 未加载完成时，内容会在 didFinish 中设置
@@ -193,17 +238,29 @@ public enum JSError: Error, CustomStringConvertible {
     
     /// 重置流式状态
     public func resetMarkdown() {
-        streamMarkdownProcessor?.reset()
+        markdownBuffer = ""
+        isStreaming = false
+        
+        // 调用 JavaScript 重置
+        let jsCode = """
+        if (window.RE && window.RE.streamMarkdownProcessor) {
+            window.RE.streamMarkdownProcessor.reset();
+        }
+        """
+        
+        runJS(jsCode) { result in
+            print("🔄 Markdown 重置完成")
+        }
     }
     
     /// 获取当前 Markdown 内容
     public var currentMarkdownContent: String {
-        return streamMarkdownProcessor?.currentContent ?? ""
+        return markdownBuffer
     }
     
     /// 是否正在流式更新
     public var isCurrentlyStreaming: Bool {
-        return streamMarkdownProcessor?.isCurrentlyStreaming ?? false
+        return isStreaming
     }
     
     
@@ -287,7 +344,7 @@ public enum JSError: Error, CustomStringConvertible {
     public func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         // Handle pre-defined editor actions
         // 定义一个回调前缀
-        let callbackPrefix = "re-callback://"
+        let callbackPrefix = "ai-callback://"
         // 如果请求的 URL 以回调前缀开头
         if navigationAction.request.url?.absoluteString.hasPrefix(callbackPrefix) == true {
             // When we get a callback, we need to fetch the command queue to run the commands
@@ -305,7 +362,7 @@ public enum JSError: Error, CustomStringConvertible {
                     } catch {
                         // 如果解析失败
                         jsonCommands = []
-                        NSLog("RichEditorView: Failed to parse JSON Commands")
+                        NSLog("AITextView: Failed to parse JSON Commands")
                     }
                     
                     // 遍历并执行每个命令
@@ -333,16 +390,10 @@ public enum JSError: Error, CustomStringConvertible {
     public func scrollToBottom(animated: Bool = true) {
         // 使用JavaScript进行平滑滚动，这样更准确
         let jsCode = """
-        const editor = document.getElementById('editor');
-        const scrollView = editor.parentElement;
-        
-        if (scrollView) {
-            scrollView.scrollTo({
-                top: scrollView.scrollHeight,
-                behavior: 'smooth'
-            });
+        if (window.RE && window.RE.scrollToBottom) {
+            window.RE.scrollToBottom();
         } else {
-            editor.scrollTop = editor.scrollHeight;
+            console.log('RE.scrollToBottom 不存在');
         }
         """
         
@@ -365,6 +416,8 @@ public enum JSError: Error, CustomStringConvertible {
     /// - parameter method: String with the name of the method and optional parameters that were passed in
     // 执行从 JavaScript 收到的命令
     private func performCommand(_ method: String) {
+        print("🔔 收到 JavaScript 命令: \(method)")
+        
         // 如果命令以 "ready" 开头
         if method.hasPrefix("ready") {
             // If loading for the first time, we have to set the content Markdown to be displayed
@@ -378,6 +431,36 @@ public enum JSError: Error, CustomStringConvertible {
                 // 调用代理的 didLoad 方法
                 delegate?.aiTextViewDidLoad?(self)
             }
+        }
+        else if method.hasPrefix("contentUpdate") {
+            // 内容更新回调
+            print("📝 内容已更新")
+        }
+        else if method.hasPrefix("streamComplete") {
+            // 流式输出完成
+            print("✅ 流式输出完成")
+        }
+        else if method.hasPrefix("contentReset") {
+            // 内容重置
+            print("🔄 内容已重置")
+        }
+        else if method.hasPrefix("heightChange/") {
+            // 高度变化
+            let heightString = method.replacingOccurrences(of: "heightChange/", with: "")
+            if let height = Int(heightString) {
+                print("📏 高度变化: \(height)")
+                // 可以在这里处理高度变化
+            }
+        }
+        else if method.hasPrefix("themeChange/") {
+            // 主题变化
+            let theme = method.replacingOccurrences(of: "themeChange/", with: "")
+            print("🎨 主题变化: \(theme)")
+        }
+        else if method.hasPrefix("debug/") {
+            // 调试信息
+            let debugInfo = method.replacingOccurrences(of: "debug/", with: "")
+            print("🐛 JavaScript 调试: \(debugInfo)")
         }
     }
     

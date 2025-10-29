@@ -19,4 +19,32 @@ public class AITextWebView: WKWebView {
         // 返回我们自定义的 accessoryView
         return accessoryView
     }
+    
+    // 自定义初始化方法，配置支持图片加载
+    public override init(frame: CGRect, configuration: WKWebViewConfiguration) {
+        // 配置允许加载图片和媒体内容
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        configuration.allowsPictureInPictureMediaPlayback = true
+        
+        // 允许加载本地和网络资源
+        if #available(iOS 14.0, *) {
+            configuration.defaultWebpagePreferences.allowsContentJavaScript = true
+        }
+        
+        // 设置用户代理，确保兼容性
+        configuration.applicationNameForUserAgent = "AITextView/1.0"
+        
+        super.init(frame: frame, configuration: configuration)
+    }
+    
+    // 便利初始化方法
+    public convenience init() {
+        let config = WKWebViewConfiguration()
+        self.init(frame: .zero, configuration: config)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }
