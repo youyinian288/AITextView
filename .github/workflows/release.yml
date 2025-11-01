@@ -104,7 +104,7 @@ jobs:
         zip -r RichEditorView-${{ needs.validate-tag.outputs.version }}.xcframework.zip RichEditorView.xcframework
         
     - name: 上传构建产物
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: RichEditorView-${{ needs.validate-tag.outputs.version }}
         path: build/RichEditorView-${{ needs.validate-tag.outputs.version }}.xcframework.zip
