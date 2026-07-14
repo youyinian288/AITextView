@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import AITextView
+import AIStreamingMarkdown
 import SwiftOpenAI
 
 class AIStreamTestViewController: UIViewController {
@@ -16,7 +16,7 @@ class AIStreamTestViewController: UIViewController {
     
     private var contentView: UIView!
     private var inputTextView: UITextView!
-    private var editorView: AITextView!
+    private var editorView: AIStreamingMarkdownView!
     private var sendButton: UIButton!
     private var stopButton: UIButton!
     private var clearButton: UIButton!
@@ -61,7 +61,7 @@ class AIStreamTestViewController: UIViewController {
         view.addSubview(inputTextView)
         
         // 创建输出编辑器
-        editorView = AITextView()
+        editorView = AIStreamingMarkdownView()
         editorView.translatesAutoresizingMaskIntoConstraints = false
         editorView.layer.borderColor = UIColor.systemGray4.cgColor
         editorView.layer.borderWidth = 1.0
@@ -695,7 +695,7 @@ graph TD
 """#
         
         print("🎨 设置初始测试内容")
-        editorView.markdown = testMarkdown
+        editorView.setMarkdown(testMarkdown)
         print("✅ 初始内容设置完成")
     }
     
@@ -789,7 +789,7 @@ graph TD
                         
                         // 直接使用流式输出更新，只发送新增的内容
                         if !content.isEmpty {
-                            self.editorView.updateMarkdownStream(content)
+                            self.editorView.append(content)
                         }
                         
                         self.message += content
@@ -804,7 +804,7 @@ graph TD
                     print("✅ 流式输出完成，总消息长度: \(self.message.count)")
 
                     // 通知 JS 端流式输出已完成，触发 streamComplete 回调
-                    self.editorView.finishMarkdownStream()
+                    self.editorView.finish()
                     
                     self.progressView.progress = 1.0
                     self.updateStatus("流式输出完成")
@@ -861,7 +861,7 @@ graph TD
         if !message.isEmpty {
             let stopMessage = "\n\n[生成已停止]"
             message += stopMessage
-            editorView.updateMarkdownStream(stopMessage)
+            editorView.append(stopMessage)
         }
     }
     
@@ -871,7 +871,7 @@ graph TD
         if !message.isEmpty {
             print("📝 有消息内容，长度: \(message.count)")
             // 使用非流式方式一次性设置当前消息内容
-            editorView.markdown = message
+            editorView.setMarkdown(message)
         } else if !errorMessage.isEmpty {
             print("❌ 有错误信息: \(errorMessage)")
             let errorMarkdown = """
@@ -879,7 +879,7 @@ graph TD
             
             > \(errorMessage)
             """
-            editorView.markdown = errorMarkdown
+            editorView.setMarkdown(errorMarkdown)
         } else {
             print("📝 使用默认内容")
             let defaultMarkdown = """
@@ -895,7 +895,7 @@ graph TD
             🚀 **开始测试 AITextView 的强大功能吧！**
             """
             // 使用非流式方式一次性设置当前消息内容
-            editorView.markdown = defaultMarkdown
+            editorView.setMarkdown(defaultMarkdown)
         }
         
         print("✅ 流式输出更新完成")
@@ -904,7 +904,7 @@ graph TD
     private func clearContent() {
         message = ""
         errorMessage = ""
-        editorView.resetMarkdown()
+        editorView.reset()
         updateStatus("内容已清除")
     }
     
@@ -1118,7 +1118,7 @@ graph TD
                 
                 // 使用流式输出更新
                 if !contentToAdd.isEmpty {
-                    self.editorView.updateMarkdownStream(contentToAdd)
+                    self.editorView.append(contentToAdd)
                 }
                 
                 self.message += contentToAdd
@@ -1142,7 +1142,7 @@ graph TD
             print("✅ 模拟流式输出完成，总消息长度: \(self.message.count)")
             
             // 标记流式输出完成
-            self.editorView.finishMarkdownStream()
+            self.editorView.finish()
             
             self.progressView.progress = 1.0
             self.updateStatus("模拟AI生成完成")

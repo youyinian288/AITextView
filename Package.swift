@@ -9,10 +9,6 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "AITextView",
-            targets: ["AITextView"]
-        ),
-        .library(
             name: "AIStreamingMarkdown",
             targets: ["AIStreamingMarkdown"]
         ),
@@ -25,22 +21,11 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "AITextView",
-            dependencies: [],
-            path: "AITextView/Sources",
-            resources: [.process("Resources")]
-        ),
-        .target(
             name: "AIStreamingMarkdown",
             dependencies: [
                 .product(name: "Markdown", package: "swift-markdown"),
             ],
             path: "AIStreamingMarkdown/Sources"
-        ),
-        .testTarget(
-            name: "AIStreamingMarkdownTests",
-            dependencies: ["AIStreamingMarkdown"],
-            path: "AIStreamingMarkdown/Tests"
         ),
     ],
     swiftLanguageVersions: [.v5]
