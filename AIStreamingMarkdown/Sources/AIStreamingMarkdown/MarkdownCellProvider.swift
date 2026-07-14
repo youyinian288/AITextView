@@ -82,44 +82,51 @@ final class MarkdownCellProvider {
     // MARK: - Configuration
 
     private func configure(cell: UICollectionViewCell, with block: MarkdownBlock, config: StreamingMarkdownConfiguration) {
-        switch (cell, block) {
-        case let (cell as ParagraphCell, .paragraph(let content)):
-            cell.setContent(content, config: config, builder: builder)
-            cell.interactionDelegate = interactionDelegate
+        switch block {
+        case .paragraph(let content):
+            guard let c = cell as? ParagraphCell else { return }
+            c.setContent(content, config: config, builder: builder)
+            c.interactionDelegate = interactionDelegate
 
-        case let (cell as HeadingCell, .heading(let level, let content)):
-            cell.setContent(level: level, inlines: content, config: config, builder: builder)
+        case .heading(let level, let content):
+            guard let c = cell as? HeadingCell else { return }
+            c.setContent(level: level, inlines: content, config: config, builder: builder)
 
-        case let (cell as CodeBlockCell, .codeBlock(let lang, let code)):
-            cell.setContent(language: lang, code: code, config: config)
+        case .codeBlock(let lang, let code):
+            guard let c = cell as? CodeBlockCell else { return }
+            c.setContent(language: lang, code: code, config: config)
 
-        case let (cell as BlockquoteCell, .blockquote(let blocks)):
-            cell.setContent(blocks, config: config, builder: builder)
-            cell.interactionDelegate = interactionDelegate
+        case .blockquote(let blocks):
+            guard let c = cell as? BlockquoteCell else { return }
+            c.setContent(blocks, config: config, builder: builder)
+            c.interactionDelegate = interactionDelegate
 
-        case let (cell as ListItemCell, .unorderedList(let items)):
-            cell.setContent(items: items, ordered: false, start: 0, config: config, builder: builder)
-            cell.interactionDelegate = interactionDelegate
+        case .unorderedList(let items):
+            guard let c = cell as? ListItemCell else { return }
+            c.setContent(items: items, ordered: false, start: 0, config: config, builder: builder)
+            c.interactionDelegate = interactionDelegate
 
-        case let (cell as ListItemCell, .orderedList(let start, let items)):
-            cell.setContent(items: items, ordered: true, start: start, config: config, builder: builder)
-            cell.interactionDelegate = interactionDelegate
+        case .orderedList(let start, let items):
+            guard let c = cell as? ListItemCell else { return }
+            c.setContent(items: items, ordered: true, start: start, config: config, builder: builder)
+            c.interactionDelegate = interactionDelegate
 
-        case let (cell as ThematicBreakCell, .thematicBreak):
-            cell.setContent(config: config)
+        case .thematicBreak:
+            guard let c = cell as? ThematicBreakCell else { return }
+            c.setContent(config: config)
 
-        case let (cell as TableCell, .table(let headers, let rows)):
-            cell.setContent(headers: headers, rows: rows, config: config, builder: builder)
+        case .table(let headers, let rows):
+            guard let c = cell as? TableCell else { return }
+            c.setContent(headers: headers, rows: rows, config: config, builder: builder)
 
-        case let (cell as ImageCell, .image(let source, let alt)):
-            cell.setContent(source: source, alt: alt, config: config)
-            cell.interactionDelegate = interactionDelegate
+        case .image(let source, let alt):
+            guard let c = cell as? ImageCell else { return }
+            c.setContent(source: source, alt: alt, config: config)
+            c.interactionDelegate = interactionDelegate
 
-        case let (cell as MathBlockCell, .mathBlock(let content)):
-            cell.setContent(math: content, config: config)
-
-        default:
-            break
+        case .mathBlock(let content):
+            guard let c = cell as? MathBlockCell else { return }
+            c.setContent(math: content, config: config)
         }
     }
 }

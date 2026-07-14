@@ -16,7 +16,6 @@ import UIKit
 /// ```
 ///
 /// For SwiftUI, wrap with `AIStreamingMarkdownSwiftUIView`.
-@objcMembers
 public final class AIStreamingMarkdownView: UIView {
 
     // MARK: - Public Properties
@@ -51,10 +50,6 @@ public final class AIStreamingMarkdownView: UIView {
 
     // MARK: - Init
 
-    /// Create a new streaming Markdown view.
-    /// - Parameters:
-    ///   - frame: The initial frame.
-    ///   - configuration: Styling configuration. Defaults to `.init()`.
     public init(frame: CGRect = .zero, configuration: StreamingMarkdownConfiguration = .init()) {
         self.configuration = configuration
         self.parser = MarkdownParser()
@@ -76,7 +71,7 @@ public final class AIStreamingMarkdownView: UIView {
         self.configuration = .init()
         self.parser = MarkdownParser()
         self.markdownCollectionView = MarkdownCollectionView(frame: .zero)
-        self.cellProvider = MarkdownCellProvider(configuration: configuration)
+        self.cellProvider = MarkdownCellProvider(config: configuration)
         self.dataSource = MarkdownDataSource(
             collectionView: markdownCollectionView.collectionView,
             cellProvider: cellProvider
@@ -93,7 +88,6 @@ public final class AIStreamingMarkdownView: UIView {
         markdownCollectionView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(markdownCollectionView)
 
-        // Wire cell interaction delegate (link taps, image taps)
         cellProvider.interactionDelegate = self
 
         NSLayoutConstraint.activate([
@@ -103,15 +97,14 @@ public final class AIStreamingMarkdownView: UIView {
             markdownCollectionView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
 
-        // Initialize the streaming controller
         streamingController = StreamingMarkdownController(
             parser: parser,
             throttleInterval: configuration.throttleInterval,
             onUpdate: { [weak self] update in
-                await self?.handleUpdate(update)
+                self?.handleUpdate(update)
             },
             onComplete: { [weak self] in
-                await self?.handleComplete()
+                self?.handleComplete()
             }
         )
 
@@ -122,27 +115,19 @@ public final class AIStreamingMarkdownView: UIView {
     // MARK: - Public API
 
     /// Append a chunk of Markdown text from an AI stream.
-    /// - Parameter markdownChunk: The new text fragment.
     public func append(_ markdownChunk: String) {
         guard !markdownChunk.isEmpty else { return }
         isStreaming = true
-
-        Task {
-            await streamingController?.append(markdownChunk)
-        }
+        streamingController?.append(markdownChunk)
     }
 
     /// Signal that the AI stream has ended.
     public func finish() {
         isStreaming = false
-
-        Task {
-            await streamingController?.finish()
-        }
+        streamingController?.finish()
     }
 
     /// Replace content with a complete Markdown string (non-streaming).
-    /// - Parameter markdown: The full Markdown content.
     public func setMarkdown(_ markdown: String) {
         self.markdown = markdown
         isStreaming = false
@@ -151,43 +136,36 @@ public final class AIStreamingMarkdownView: UIView {
         dataSource.applyFullUpdate(blocks)
 
         delegate?.streamingMarkdownView(self, markdownDidChange: markdown)
-
-        // Reset streaming state
-        Task {
-            await streamingController?.setMarkdown(markdown)
-        }
+        streamingController?.setMarkdown(markdown)
     }
 
-    /// Reset all content and streaming state. Ready for a new stream.
+    /// Reset all content and streaming state.
     public func reset() {
         markdown = ""
         isStreaming = false
         dataSource.clear()
-
-        Task {
-            await streamingController?.reset()
-        }
-
+        streamingController?.reset()
         delegate?.streamingMarkdownView(self, markdownDidChange: "")
     }
 
     /// Scroll to the bottom of the content.
-    /// - Parameter animated: Whether to animate the scroll. Default: `true`.
     public func scrollToBottom(animated: Bool = true) {
         autoScrollController.scrollToBottom(animated: animated)
     }
 
     // MARK: - Private Handlers
 
-    @MainActor
     private func handleUpdate(_ update: StreamingUpdate) {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.handleUpdate(update) }
+            return
+        }
+
         markdown = update.fullText
 
         if update.volatile.isEmpty {
-            // All stable — full update
             dataSource.applyFullUpdate(update.allBlocks)
         } else {
-            // Incremental update
             dataSource.applyIncrementalUpdate(stable: update.stable, volatile: update.volatile)
         }
 
@@ -195,8 +173,11 @@ public final class AIStreamingMarkdownView: UIView {
         autoScrollController.contentDidUpdate()
     }
 
-    @MainActor
     private func handleComplete() {
+        guard Thread.isMainThread else {
+            DispatchQueue.main.async { [weak self] in self?.handleComplete() }
+            return
+        }
         isStreaming = false
     }
 }
@@ -208,7 +189,6 @@ extension AIStreamingMarkdownView: MarkdownCellInteractionDelegate {
     func cellDidTapLink(_ url: URL) {
         let handled = delegate?.streamingMarkdownView(self, didTapLink: url) ?? true
         if handled {
-            // Default behavior: open in Safari
             UIApplication.shared.open(url)
         }
     }

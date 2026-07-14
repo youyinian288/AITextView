@@ -81,9 +81,9 @@ final class AutoScrollController: NSObject {
     }
 }
 
-// MARK: - UIScrollViewDelegate
+// MARK: - UICollectionViewDelegate (inherits UIScrollViewDelegate)
 
-extension AutoScrollController: UIScrollViewDelegate {
+extension AutoScrollController: UICollectionViewDelegate {
 
     func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
         isUserScrolling = true
