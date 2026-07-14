@@ -66,253 +66,6 @@ class AIStreamTestViewController: UIViewController {
         editorView.layer.borderColor = UIColor.systemGray4.cgColor
         editorView.layer.borderWidth = 1.0
         editorView.layer.cornerRadius = 8.0
-        editorView.markdown = """
-        # 🎯 AITextView Markdown 富文本测试
-        
-        ## 📝 文本格式测试
-        
-        **粗体文本 Bold Text** | *斜体文本 Italic Text* | ~~删除线文本 Strikethrough Text~~
-        
-        ***粗体斜体 Bold Italic*** | **_粗体下划线 Bold Underlined_**
-        
-        上标: H~2~O | 下标: x^2^ + y^2^ = z^2^
-        
-        ## 🎨 富文本标签测试
-        
-        <u>下划线文本 Underlined Text</u> | <mark>高亮文本 Highlighted Text</mark>
-        
-        <del>删除线文本 Deleted Text</del> | <ins>插入线文本 Inserted Text</ins>
-        
-        <small>小字体文本 Small Text</small> | <big>大字体文本 Big Text</big>
-        
-        <kbd>Ctrl</kbd> + <kbd>C</kbd> | <var>变量 Variable</var> | <samp>示例输出 Sample Output</samp>
-        
-        ## 📋 标题级别测试
-        
-        # 一级标题 H1
-        ## 二级标题 H2
-        ### 三级标题 H3
-        #### 四级标题 H4
-        ##### 五级标题 H5
-        ###### 六级标题 H6
-
-        ## 📝 列表测试
-
-        ### 有序列表 Ordered List:
-        
-        1. 第一项 First Item
-        2. 第二项 Second Item
-        3. 第三项 Third Item
-           1. 嵌套项 1 Nested Item 1
-           2. 嵌套项 2 Nested Item 2
-
-        ### 无序列表 Unordered List:
-        
-        - 项目 A Item A
-        - 项目 B Item B
-        - 项目 C Item C
-          - 子项目 1 Sub Item 1
-          - 子项目 2 Sub Item 2
-
-        ## 🔗 链接测试
-        
-        访问 [AITextView GitHub 仓库](https://github.com/youyinian288/AITextView)
-        
-        查看 [Apple 官网](https://www.apple.com) 了解更多信息
-        
-        这是一个 [邮箱链接](mailto:test@example.com) 和 [电话链接](tel:+1234567890)
-        
-        ## 🖼️ 图片测试
-        
-        网络图片示例：
-        ![随机网络图片](https://picsum.photos/200/150?random=1)
-        
-        Base64 图片示例（小图标）：
-        ![Base64 SVG 图片](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzQyODVmNCIvPgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5CYXNlNjQgSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==)
-        
-        Base64 图片示例（彩色渐变）：
-        ![Base64 渐变图片](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjZmY2YjY5Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iNTAlIiBzdG9wLWNvbG9yPSIjNGZjM2Y0Ii8+CiAgICAgIDxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzQyODVmNCIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9InVybCgjZ3JhZGllbnQpIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGRvbWluYW50LWJhc2VsaW5lPSJtaWRkbGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IndoaXRlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIj5HcmFkaWVudCBJbWFnZTwvdGV4dD4KPC9zdmc+)
-        
-        Base64 图片示例（简单几何图形）：
-        ![Base64 几何图形](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjEyNSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI1MCIgZmlsbD0iI2ZmNjI2MiIvPgogIDxyZWN0IHg9IjEwMCIgeT0iMjAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iIzQyODVmNCIvPgogIDxwb2x5Z29uIHBvaW50cz0iMjAwLDIwIDI0MCw2MCAyMDAsMTAwIDE2MCw2MCIgZmlsbD0iI2ZmYzEwNyIvPgogIDx0ZXh0IHg9IjEyNSIgeT0iMTEwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0Ij5TaGFwZXM8L3RleHQ+Cjwvc3ZnPg==)
-
-        ## 💬 引用测试
-        
-        > "这是一个引用块，用于突出显示重要内容或引用他人的话语。"
-        > 
-        > — 作者名称
-        
-        ## 📊 表格测试
-        
-        | 功能 Feature | 支持 Support | 说明 Description |
-        |-------------|-------------|------------------|
-        | 粗体 Bold | ✅ | 支持粗体文本格式 |
-        | 斜体 Italic | ✅ | 支持斜体文本格式 |
-        | 列表 Lists | ✅ | 支持有序和无序列表 |
-        
-        ## 🎯 特殊字符和符号
-        
-        数学符号: ∑ ∫ ∏ ∆ ∇ ∞ ≤ ≥ ≠ ≈ ± × ÷
-        
-        箭头符号: ← → ↑ ↓ ↔ ↕ ⇐ ⇒ ⇑ ⇓
-        
-        货币符号: $ € £ ¥ ₹ ₽
-        
-        其他符号: © ® ™ § ¶ † ‡ • ◦ ◊
-        
-        ## 🖼️ 图片渲染测试
-        
-        ### SVG 图片测试
-        ![SVG Logo](https://upload.wikimedia.org/wikipedia/commons/0/02/SVG_logo.svg)
-        
-        ### 网络图片测试
-        ![GitHub Logo](https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png)
-        
-        ![Apple Logo](https://developer.apple.com/assets/elements/icons/swiftui/swiftui-96x96_2x.png)
-        
-        ### Base64 图片测试
-        ![Base64 Image](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJyZWQiIC8+Cjwvc3ZnPgo=)
-        
-        ### 图片尺寸测试
-        ![Small Image](https://via.placeholder.com/150x100/FF6B6B/FFFFFF?text=Small)
-        ![Medium Image](https://via.placeholder.com/300x200/4ECDC4/FFFFFF?text=Medium)
-        ![Large Image](https://via.placeholder.com/600x400/45B7D1/FFFFFF?text=Large)
-        
-        ## 🔧 代码测试
-        
-        ### 内联代码
-        内联代码: `console.log("Hello World")` | `let name = "Swift"` | `print("AITextView")`
-        
-        ### 基础代码块
-        ```swift
-        func fibonacci(_ n: Int) -> Int {
-            if n <= 1 { return n }
-            return fibonacci(n - 1) + fibonacci(n - 2)
-        }
-        ```
-        
-        ### 多语言代码块
-        ```javascript
-        function fibonacci(n) {
-            if (n <= 1) return n;
-            return fibonacci(n - 1) + fibonacci(n - 2);
-        }
-        ```
-        
-        ```python
-        def fibonacci(n):
-            if n <= 1:
-                return n
-            return fibonacci(n - 1) + fibonacci(n - 2)
-        ```
-        
-        ```java
-        public class Fibonacci {
-            public static int fibonacci(int n) {
-                if (n <= 1) return n;
-                return fibonacci(n - 1) + fibonacci(n - 2);
-            }
-        }
-        ```
-        
-        ### 长代码块测试
-        ```swift
-        import Foundation
-        
-        class AITextView: UIView {
-            private var webView: WKWebView!
-            private var markdownProcessor: MarkdownProcessor!
-            
-            override init(frame: CGRect) {
-                super.init(frame: frame)
-                setupWebView()
-                setupMarkdownProcessor()
-            }
-            
-            required init?(coder: NSCoder) {
-                super.init(coder: coder)
-                setupWebView()
-                setupMarkdownProcessor()
-            }
-            
-            private func setupWebView() {
-                let config = WKWebViewConfiguration()
-                webView = WKWebView(frame: bounds, configuration: config)
-                webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                addSubview(webView)
-            }
-            
-            private func setupMarkdownProcessor() {
-                markdownProcessor = MarkdownProcessor()
-            }
-            
-            func loadMarkdown(_ markdown: String) {
-                let html = markdownProcessor.process(markdown)
-                webView.loadHTMLString(html, baseURL: nil)
-            }
-        }
-        ```
-
-        ## 📝 段落和换行测试
-        
-        这是第一个段落。包含多行文本，用于测试段落的显示效果。AITextView 应该能够正确处理段落间距和换行。
-        
-        这是第二个段落。用于测试多个段落之间的间距和格式。每个段落都应该有适当的间距。
-        
-        这是第三个段落。  
-        这里有一个手动换行。  
-        用于测试 Markdown 换行的效果。
-        
-        ## 🎨 混合格式测试
-        
-        ***粗体斜体 Bold Italic*** | ~~*删除线斜体 Strikethrough Italic*~~
-        
-        ## 🎉 测试完成
-        
-        这个 Markdown 包含了 AITextView 支持的大部分功能。请使用工具栏测试各种编辑功能，包括：
-        
-        - 文本格式（粗体、斜体、删除线）
-        - 标题级别
-        - 列表和缩进
-        - 链接插入
-        - 图片插入（网络图片、Base64图片）
-        - 引用块
-        - 表格
-        - 代码块
-        - 撤销重做
-        - 键盘工具栏
-        
-        ### 📸 图片插入功能说明
-        
-        **支持的图片格式：**
-        
-        - 🌐 **网络图片**：通过URL直接插入在线图片
-        - 📱 **本地图片**：从相册选择，自动转换为Base64格式
-        - 🔧 **Base64图片**：直接插入Base64编码的图片数据
-        
-        **Base64图片优势：**
-
-        - ✅ 无需网络连接，离线可用
-        - ✅ 图片数据直接嵌入Markdown，便于分享
-        - ✅ 支持SVG矢量图形，缩放不失真
-        - ✅ 适合小图标、简单图形等场景
-
-        ## 🎉 测试完成
-        
-        这个 Markdown 包含了 AITextView 支持的大部分功能。请使用工具栏测试各种编辑功能，包括：
-        
-        - 文本格式（粗体、斜体、删除线）
-        - 标题级别
-        - 列表和缩进
-        - 链接插入
-        - 图片插入（网络图片、Base64图片）
-        - 代码块和行内代码
-        - 表格和引用
-        
-        ---
-        
-        🚀 **开始测试 AITextView 的强大 Markdown 功能吧！**
-        """
         
         // 创建发送按钮
         sendButton = UIButton(type: .system)
@@ -469,25 +222,480 @@ class AIStreamTestViewController: UIViewController {
         updateUIState()
         
         // 设置初始内容 - 使用简单的 Markdown 测试
-        let testMarkdown = """
-        # 🚀 AITextView 流式 Markdown 测试
-        
-        ## 功能特性
-        
-        - ✅ **实时流式渲染** - 支持 AI 流式输出的 Markdown 解析
-        - ✅ **富文本显示** - 支持标题、列表、代码块等格式
-        - ✅ **Base64 图片** - 支持内嵌图片显示
-        - ✅ **响应式设计** - 自适应不同屏幕尺寸
-        
-        ## 测试说明
-        
-        点击 **发送** 按钮开始测试 AI 流式输出功能！
-        
-        > 💡 **提示**: 输入任何问题，AI 会以 Markdown 格式流式返回答案
-        """
+        let testMarkdown = #"""
+<thinking>这是一段自定义解析处理的thinking组件</thinking>
+>>>I'll create a simple Electron + Vue chat application demo. Here's the structure:
+
+
+[Star on GitHub](https://github.com/Simon-He95/vue-markdown-render)
+
+
+[【Author: Simon】](https://simonhe.me/)
+
+
+
+![Vue Markdown Icon](/vue-markdown-icon.svg "Vue Markdown Icon")
+*Figure: Vue Markdown Icon (served from /vue-markdown-icon.svg)*
+
+
+这是 ~~已删除的文本~~，这是一个表情 :smile:。
+
+
+- [ ] Star this repo
+- [x] Fork this repo
+- [ ] Create issues
+- [x] Submit PRs
+
+
+##  表格
+
+
+| 姓名 | 年龄 | 职业 |
+|------|------|------|
+| 张三 | 25   | 工程师 |
+| 李四 | 30   | 设计师 |
+| 王五 | 28   | 产品经理 |
+
+
+### 对齐表格
+| 左对齐 | 居中对齐 | 右对齐 |
+|:-------|:--------:|-------:|
+| 内容1  |  内容2   |  内容3 |
+| 内容4  |  内容5   |  内容6 |
+
+
+我将为您输出泰勒公式的一般形式及其常见展开式。
+
+
+---
+
+
+## 1. 泰勒公式（Taylor's Formula）
+
+
+### 一般形式（在点 \(x = a\) 处展开）：
+\[
+f(x) = f(a) + f'(a)(x-a) + \frac{f''(a)}{2!}(x-a)^2 + \frac{f'''(a)}{3!}(x-a)^3 + \cdots + \frac{f^{(n)}(a)}{n!}(x-a)^n + R_n(x)
+\]
+
+
+其中：
+- \(f^{(k)}(a)\) 是 \(f(x)\) 在 \(x=a\) 处的 \(k\) 阶导数
+- \(R_n(x)\) 是余项，常见形式有拉格朗日余项：
+\[
+R_n(x) = \frac{f^{(n+1)}(\xi)}{(n+1)!}(x-a)^{n+1}, \quad \xi \text{ 在 } a \text{ 和 } x \text{ 之间}
+\]
+
+
+---
+
+
+## 2. 麦克劳林公式（Maclaurin's Formula，即 \(a=0\) 时的泰勒公式）：
+\[
+f(x) = f(0) + f'(0)x + \frac{f''(0)}{2!}x^2 + \frac{f'''(0)}{3!}x^3 + \cdots + \frac{f^{(n)}(0)}{n!}x^n + R_n(x)
+\]
+
+
+---
+
+
+## 3. 常见函数的麦克劳林展开（前几项）
+
+
+- **指数函数**：
+\[
+e^x = 1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \cdots + \frac{x^n}{n!} + \cdots, \quad x \in \mathbb{R}
+\]
+
+
+- **正弦函数**：
+\[
+\sin x = x - \frac{x^3}{3!} + \frac{x^5}{5!} - \frac{x^7}{7!} + \cdots + (-1)^n \frac{x^{2n+1}}{(2n+1)!} + \cdots
+\]
+
+
+- **余弦函数**：
+\[
+\cos x = 1 - \frac{x^2}{2!} + \frac{x^4}{4!} - \frac{x^6}{6!} + \cdots + (-1)^n \frac{x^{2n}}{(2n)!} + \cdots
+\]
+
+
+- **自然对数**（在 \(x=0\) 附近）：
+\[
+\ln(1+x) = x - \frac{x^2}{2} + \frac{x^3}{3} - \frac{x^4}{4} + \cdots + (-1)^{n-1} \frac{x^n}{n} + \cdots, \quad -1 < x \le 1
+\]
+
+
+- **二项式展开**（\( (1+x)^m \)，\(m\) 为实数）：
+\[
+(1+x)^m = 1 + mx + \frac{m(m-1)}{2!}x^2 + \frac{m(m-1)(m-2)}{3!}x^3 + \cdots, \quad |x| < 1
+\]
+
+
+- **公式**
+
+
+
+- **代入数据**
+   \[
+   \frac{363}{15,135} \times 100\% = 2.398\%
+   \]
+
+
+- **计算工具验证**
+   通过数学计算工具确认结果：
+   `363 ÷ 15,135 × 100 = 2.39841427...` 
+
+
+- **差异说明**
+   $$E=mc^2$$
+
+
+---
+
+
+如果您需要某个特定函数在特定点的泰勒展开，请告诉我，我可以为您详细写出。
+
+
+::: warning
+这是一个警告块。
+:::
+
+
+::: tip 提示标题
+这是带标题的提示。
+:::
+
+
+::: error 错误块
+这是一个错误块。
+:::
+
+
+مرحبا بكم في عالم اللغة العربية!
+1. First, let's set up the project:
+
+
+```shellscript
+# Create Vue project
+npm create vue@latest electron-vue-chat
+
+
+# Navigate to project
+cd electron-vue-chat
+
+
+# Install dependencies
+npm install
+npm install electron electron-builder vue-router
+
+
+# Install dev dependencies
+npm install -D electron-dev-server concurrently wait-on
+```
+
+
+2. Create the main Electron file:
+
+
+```javascript:electron/main.js
+const { app, BrowserWindow } = require('electron');
+const path = require('path');
+const isDev = process.env.NODE_ENV === 'development';
+
+
+let mainWindow;
+
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 900,
+    height: 680,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+
+
+  const url = isDev
+    ? 'http://localhost:5173'
+    : `file://${path.join(__dirname, '../dist/index.html')}`;
+
+
+  mainWindow.loadURL(url);
+
+
+  if (isDev) {
+    mainWindow.webContents.openDevTools();
+  }
+
+
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+}
+
+
+app.on('ready', createWindow);
+
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+
+app.on('activate', () => {
+  if (mainWindow === null) {
+    createWindow();
+  }
+});
+```
+
+
+3. Update package.json:
+
+
+```diff json:package.json
+{
+  "name": "vue-renderer-markdown",
+  "type": "module",
+- "version": "0.0.49",
++ "version": "0.0.54-beta.1",
+  "packageManager": "pnpm@10.16.1",
+  "description": "A Vue 3 component that renders Markdown string content as HTML, supporting custom components and advanced markdown features.",
+  "author": "Simon He",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git + git@github.com:Simon-He95/vue-markdown-render.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Simon-He95/vue-markdown-render/issues"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "markdown",
+    "markdown-to-html",
+    "markdown-renderer",
+    "vue-markdown",
+    "vue-component",
+    "html",
+    "renderer",
+    "custom-component"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/exports.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./index.css": "./dist/index.css",
+    "./index.tailwind.css": "./dist/index.tailwind.css",
+    "./tailwind": "./dist/tailwind.ts"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/types/exports.d.ts",
+  "files": [
+    "dist"
+  ],
+}
+```
+
+
+4. Create chat components \(diversified languages\):
+
+
+```python:src/server/app.py
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+
+app = FastAPI()
+
+
+class Message(BaseModel):
+    sender: str
+    text: str
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.post("/echo")
+def echo(msg: Message):
+    return {"reply": f"Echo: {msg.text}"}
+```
+
+
+5. Create a native module example \(C++\):
+
+
+```cpp:src/native/compute.cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+
+int fibonacci(int n){
+  if(n<=1) return n;
+  int a=0,b=1;
+  for(int i=2;i<=n;++i){ int c=a+b; a=b; b=c; }
+  return b;
+}
+
+
+int main(){
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  cout << "fib(10)=" << fibonacci(10) << "\n";
+  return 0;
+}
+```
+
+
+6. Update the main App.vue:
+
+
+```vue:src/App.vue
+<template>
+  <router-view />
+</template>
+
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+body {
+  font-family: Arial, sans-serif;
+}
+</style>
+```
+
+
+7. Set up the router:
+
+
+```javascript:src/router/index.js
+import { createRouter, createWebHistory } from 'vue-router';
+import ChatView from '../views/ChatView.vue';
+
+
+const routes = [
+  {
+    path: '/',
+    name: 'chat',
+    component: ChatView
+  }
+];
+
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+});
+
+
+export default router;
+```
+
+
+8. Update main.js:
+
+
+```javascript:src/main.js
+import { createApp } from 'vue';
+import App from './App.vue';
+import router from './router';
+
+
+createApp(App).use(router).mount('#app');
+```
+
+
+9. Mermaid graphic:
+
+
+```mermaid
+graph TD
+    Kira_Yamato[基拉·大和]
+    Lacus_Clyne[拉克丝·克莱因]
+    Athrun_Zala[阿斯兰·萨拉]
+    Cagalli_Yula_Athha[卡嘉莉·尤拉·阿斯哈]
+    Shinn_Asuka[真·飞鸟]
+    Lunamaria_Hawke[露娜玛丽亚·霍克]
+    COMPASS[世界和平监视组织COMPASS]
+    Foundation[芬德申王国]
+    Orphee_Lam_Tao[奥尔菲·拉姆·陶]
+    %% 节点定义结束，开始定义边
+    Kira_Yamato ---|恋人| Lacus_Clyne
+    Kira_Yamato ---|挚友| Athrun_Zala
+    Kira_Yamato -->|隶属| COMPASS
+    Kira_Yamato -->|前辈| Shinn_Asuka
+    Lacus_Clyne -->|初代总裁| COMPASS
+    Athrun_Zala ---|恋人| Cagalli_Yula_Athha
+    Athrun_Zala -.->|协力| COMPASS
+    Shinn_Asuka ---|恋人| Lunamaria_Hawke
+    Shinn_Asuka -->|隶属| COMPASS
+    Lunamaria_Hawke -->|隶属| COMPASS
+    COMPASS -->|对立| Foundation
+    Orphee_Lam_Tao -->|隶属| Foundation
+    Orphee_Lam_Tao -.->|追求| Lacus_Clyne
+```
+
+
+---
+# 复杂数学公式
+
+
+### 1. **理解 \(\boldsymbol{\alpha}^T \boldsymbol{\beta} = 0\) 的含义**
+   - \(\boldsymbol{\alpha}\) 和 \(\boldsymbol{\beta}\) 是三维列向量，因此 \(\boldsymbol{\alpha}^T \boldsymbol{\beta}\) 表示它们的点积（内积）。
+   - \(\boldsymbol{\alpha}^T \boldsymbol{\beta} = 0\) 意味着向量 \(\boldsymbol{\alpha}\) 和 \(\boldsymbol{\beta}\) 正交（即垂直），因为点积为零表示它们之间的夹角为 90 度。
+
+
+### 2. **正交补空间的概念**
+   - 在线性代数中，对于一个子空间 \(W\)，它的正交补空间（记为 \(W^\perp\)）定义为所有与 \(W\) 中每个向量正交的向量的集合。即：
+     \[
+     W^\perp = \{ \mathbf{v} \in \mathbb{R}^3 \mid \mathbf{v} \cdot \mathbf{w} = 0 \text{ 对于所有 } \mathbf{w} \in W \}
+     \]
+   - 例如，如果 \(W\) 是由一个向量 \(\boldsymbol{\alpha}\) 张成的一维子空间（即 \(W = \operatorname{span}\{\boldsymbol{\alpha}\}\)），那么 \(W^\perp\) 就是所有与 \(\boldsymbol{\alpha}\) 正交的向量构成的二维平面。
+
+
+### 3. **\(\boldsymbol{\alpha}^T \boldsymbol{\beta} = 0\) 与正交补空间的联系**
+   - 当 \(\boldsymbol{\alpha}^T \boldsymbol{\beta} = 0\) 时，这意味着：
+     - \(\boldsymbol{\beta}\) 属于 \(\operatorname{span}\{\boldsymbol{\alpha}\}\) 的正交补空间，即 \(\boldsymbol{\beta} \in (\operatorname{span}\{\boldsymbol{\alpha}\})^\perp\)。
+     - 同样，\(\boldsymbol{\alpha}\) 也属于 \(\operatorname{span}\{\boldsymbol{\beta}\}\) 的正交补空间，即 \(\boldsymbol{\alpha} \in (\operatorname{span}\{\boldsymbol{\beta}\})^\perp\)。
+   - 换句话说，\(\boldsymbol{\beta}\) 与 \(\boldsymbol{\alpha}\) 张成的直线正交，因此 \(\boldsymbol{\beta}\) 位于该直线的垂直平面（即正交补空间）上。反之亦然。
+
+
+### 4. **在三维空间中的几何意义**
+   - 在三维空间中，如果 \(\boldsymbol{\alpha}\) 是一个非零向量，那么 \(\operatorname{span}\{\boldsymbol{\alpha}\}\) 是一条通过原点的直线，而它的正交补空间 \((\operatorname{span}\{\boldsymbol{\alpha}\})^\perp\) 是一个通过原点且与该直线垂直的平面。
+   - \(\boldsymbol{\alpha}^T \boldsymbol{\beta} = 0\) 表示 \(\boldsymbol{\beta}\) 位于这个垂直平面上。同样，如果 \(\boldsymbol{\beta}\) 非零，那么 \(\boldsymbol{\alpha}\) 也位于与 \(\boldsymbol{\beta}\) 垂直的平面上。
+
+
+### 5. **推广到更一般的情况**
+   - 如果考虑多个向量，正交补空间的概念可以扩展。例如，如果有一组向量 \(\{\boldsymbol{\alpha}_1, \boldsymbol{\alpha}_2, \ldots, \boldsymbol{\alpha}_k\}\)，那么它们的张成子空间 \(W = \operatorname{span}\{\boldsymbol{\alpha}_1, \ldots, \boldsymbol{\alpha}_k\}\) 的正交补空间 \(W^\perp\) 包含所有与这些向量正交的向量。
+   - 在这种情况下，\(\boldsymbol{\alpha}^T \boldsymbol{\beta} = 0\) 可以看作 \(\boldsymbol{\beta}\) 与 \(W\) 正交的一个特例（当 \(W\) 只由 \(\boldsymbol{\alpha}\) 张成时）。
+
+
+总之，\(\boldsymbol{\alpha}^T \boldsymbol{\beta} = 0\) 直接体现了正交补空间的关系：它表明一个向量属于另一个向量张成子空间的正交补空间。如果你有更多向量或子空间，这种联系可以进一步深化。
+
+
+**示例：** emm`1-(5)`、`3-(3)`、`3-(4)` complex test `1-(4)`“heiheihei”中，hello world。
+"""#
         
         print("🎨 设置初始测试内容")
-        editorView.updateMarkdownStream(testMarkdown, isComplete: true)
+        editorView.markdown = testMarkdown
         print("✅ 初始内容设置完成")
     }
     
@@ -581,7 +789,7 @@ class AIStreamTestViewController: UIViewController {
                         
                         // 直接使用流式输出更新，只发送新增的内容
                         if !content.isEmpty {
-                            self.editorView.updateMarkdownStream(content, isComplete: false)
+                            self.editorView.updateMarkdownStream(content)
                         }
                         
                         self.message += content
@@ -594,9 +802,9 @@ class AIStreamTestViewController: UIViewController {
                 
                 await MainActor.run {
                     print("✅ 流式输出完成，总消息长度: \(self.message.count)")
-                    
-                    // 标记流式输出完成
-                    self.editorView.updateMarkdownStream("", isComplete: true)
+
+                    // 通知 JS 端流式输出已完成，触发 streamComplete 回调
+                    self.editorView.finishMarkdownStream()
                     
                     self.progressView.progress = 1.0
                     self.updateStatus("流式输出完成")
@@ -649,11 +857,11 @@ class AIStreamTestViewController: UIViewController {
         updateUIState()
         progressView.isHidden = true
         
-        // 在消息末尾添加停止提示并标记完成
+        // 在消息末尾添加停止提示
         if !message.isEmpty {
             let stopMessage = "\n\n[生成已停止]"
             message += stopMessage
-            editorView.updateMarkdownStream(stopMessage, isComplete: true)
+            editorView.updateMarkdownStream(stopMessage)
         }
     }
     
@@ -662,8 +870,8 @@ class AIStreamTestViewController: UIViewController {
         
         if !message.isEmpty {
             print("📝 有消息内容，长度: \(message.count)")
-            // 使用流式输出更新
-            editorView.updateMarkdownStream(message, isComplete: !isStreaming)
+            // 使用非流式方式一次性设置当前消息内容
+            editorView.markdown = message
         } else if !errorMessage.isEmpty {
             print("❌ 有错误信息: \(errorMessage)")
             let errorMarkdown = """
@@ -671,7 +879,7 @@ class AIStreamTestViewController: UIViewController {
             
             > \(errorMessage)
             """
-            editorView.updateMarkdownStream(errorMarkdown, isComplete: true)
+            editorView.markdown = errorMarkdown
         } else {
             print("📝 使用默认内容")
             let defaultMarkdown = """
@@ -686,7 +894,8 @@ class AIStreamTestViewController: UIViewController {
             
             🚀 **开始测试 AITextView 的强大功能吧！**
             """
-            editorView.updateMarkdownStream(defaultMarkdown, isComplete: true)
+            // 使用非流式方式一次性设置当前消息内容
+            editorView.markdown = defaultMarkdown
         }
         
         print("✅ 流式输出更新完成")
@@ -909,7 +1118,7 @@ class AIStreamTestViewController: UIViewController {
                 
                 // 使用流式输出更新
                 if !contentToAdd.isEmpty {
-                    self.editorView.updateMarkdownStream(contentToAdd, isComplete: false)
+                    self.editorView.updateMarkdownStream(contentToAdd)
                 }
                 
                 self.message += contentToAdd
@@ -933,7 +1142,7 @@ class AIStreamTestViewController: UIViewController {
             print("✅ 模拟流式输出完成，总消息长度: \(self.message.count)")
             
             // 标记流式输出完成
-            self.editorView.updateMarkdownStream("", isComplete: true)
+            self.editorView.finishMarkdownStream()
             
             self.progressView.progress = 1.0
             self.updateStatus("模拟AI生成完成")

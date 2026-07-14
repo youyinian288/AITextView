@@ -31,142 +31,37 @@
 
 **改进方案**：
 
-#### 方案 A：增量渲染（推荐）
+#### 方案 A：增量渲染（推荐）✅ 已实现
+
+**实现状态**：已在 `stream_markdown_editor.js` 中实现增量渲染功能
+
 ```javascript
-class IncrementalRenderer {
-    constructor() {
-        this.lastRenderedAST = [];
-        this.renderCache = new Map(); // 节点缓存，避免重复渲染
-    }
-    
-    // AST 差异计算（简化版，实际可使用更复杂的算法如 Myers diff）
-    astDiff(oldAST, newAST) {
-        const diff = {
-            added: [],
-            modified: [],
-            removed: [],
-            unchanged: []
-        };
-        
-        const oldLength = oldAST.length;
-        const newLength = newAST.length;
-        const maxLength = Math.max(oldLength, newLength);
-        
-        // 简单的基于索引和类型的比较
-        for (let i = 0; i < maxLength; i++) {
-            const oldNode = oldAST[i];
-            const newNode = newAST[i];
-            
-            if (!oldNode && newNode) {
-                // 新增节点
-                diff.added.push({ node: newNode, index: i });
-            } else if (oldNode && !newNode) {
-                // 删除节点
-                diff.removed.push({ node: oldNode, index: i });
-            } else if (oldNode && newNode) {
-                // 比较节点内容（简化：基于类型和内容）
-                if (this.nodeEquals(oldNode, newNode)) {
-                    diff.unchanged.push({ node: newNode, index: i });
-                } else {
-                    diff.modified.push({ oldNode, newNode, index: i });
-                }
-            }
-        }
-        
-        return diff;
-    }
-    
-    // 节点相等性判断（可根据需要扩展）
-    nodeEquals(node1, node2) {
-        if (node1.type !== node2.type) return false;
-        if (node1.content !== node2.content) return false;
-        if (JSON.stringify(node1.attrs) !== JSON.stringify(node2.attrs)) return false;
-        return true;
-    }
-    
-    // 增量渲染主方法
-    renderIncremental(newAST, container) {
-        if (!newAST || newAST.length === 0) {
-            container.innerHTML = '';
-            this.lastRenderedAST = [];
-            return;
-        }
-        
-        // 首次渲染或完全重建（当差异过大时）
-        if (this.lastRenderedAST.length === 0 || 
-            newAST.length < this.lastRenderedAST.length * 0.5) {
-            this.renderFull(newAST, container);
-            return;
-        }
-        
-        try {
-            const diff = this.astDiff(this.lastRenderedAST, newAST);
-            
-            // 从后往前删除，避免索引变化
-            diff.removed.reverse().forEach(({ index }) => {
-                const child = container.children[index];
-                if (child) {
-                    child.remove();
-                }
-            });
-            
-            // 更新修改的节点
-            diff.modified.forEach(({ oldNode, newNode, index }) => {
-                const oldElement = container.children[index];
-                if (oldElement && this.renderCache.has(oldNode)) {
-                    // 复用缓存的渲染函数
-                    const cached = this.renderCache.get(oldNode);
-                    if (cached) {
-                        const newElement = this.renderNode(newNode);
-                        oldElement.replaceWith(newElement);
-                        this.renderCache.set(newNode, newElement);
-                        this.renderCache.delete(oldNode);
-                    }
-                } else {
-                    const newElement = this.renderNode(newNode);
-                    oldElement?.replaceWith(newElement) || container.appendChild(newElement);
-                    this.renderCache.set(newNode, newElement);
-                }
-            });
-            
-            // 添加新节点（保持顺序）
-            diff.added.forEach(({ node, index }) => {
-                const newElement = this.renderNode(node);
-                const refNode = container.children[index];
-                if (refNode) {
-                    container.insertBefore(newElement, refNode);
-                } else {
-                    container.appendChild(newElement);
-                }
-                this.renderCache.set(node, newElement);
-            });
-            
-            this.lastRenderedAST = [...newAST];
-            
-        } catch (error) {
-            console.error('增量渲染失败，回退到全量渲染:', error);
-            this.renderFull(newAST, container);
-        }
-    }
-    
-    // 全量渲染（fallback）
-    renderFull(ast, container) {
-        container.innerHTML = '';
-        ast.forEach(node => {
-            const element = this.renderNode(node);
-            container.appendChild(element);
-            this.renderCache.set(node, element);
+// 只渲染新增的节点
+renderIncremental(newAST, container) {
+    const oldAST = this.lastRenderedAST || [];
+    const diff = this.astDiff(oldAST, newAST);
+
+    // 优化：如果是纯追加场景（只有新增节点，没有修改和删除），快速处理
+    if (diff.added.length > 0 && diff.modified.length === 0 && diff.removed.length === 0) {
+        // 直接追加新节点，无需复杂的DOM操作
+        diff.added.forEach(({ node, index }) => {
+            const element = this.renderNode(node, container);
+            this.astToDOM.set(index, element);
         });
-        this.lastRenderedAST = [...ast];
+        this.lastRenderedAST = newAST;
+        return;
     }
-    
-    // 清理缓存
-    clearCache() {
-        this.renderCache.clear();
-        this.lastRenderedAST = [];
-    }
+
+    // 完整更新路径：处理删除、修改和新增
+    // ... 其他逻辑
 }
 ```
+
+**优势**：
+- ✅ 已实现：纯追加场景下性能最优（O(n) 而非 O(n²)）
+- ✅ 支持增量更新：只更新变化的节点
+- ✅ 保持 DOM 引用：使用 Map 维护 AST 索引到 DOM 的映射
+- ⚠️ 待优化：完整的 diff 算法可以进一步优化（使用更高效的树对比算法）
 
 #### 方案 B：虚拟滚动 + 节流
 ```javascript
@@ -228,60 +123,61 @@ private func escapeJavaScriptString(_ string: String) -> String {
     return result
 }
 
-// 方案 B：使用 JSONEncoder（推荐 - 更安全，正确处理所有 Unicode 字符）
-// JSONEncoder 能够正确处理所有特殊字符，包括：
-// - 控制字符（\n, \r, \t 等）
-// - Unicode 字符（emoji、中文等）
-// - 转义字符（\, ", ' 等）
-// - 零宽字符等边界情况
+// ✅ 已实现：使用 JSONEncoder（更安全，正确处理所有 Unicode 字符）
 private func escapeJavaScriptString(_ string: String) -> String {
-    // 使用 JSONEncoder 编码字符串，它会自动添加引号和转义
-    do {
-        let jsonData = try JSONEncoder().encode(string)
-        // JSON 编码的结果是 "..." 格式，需要去掉首尾引号才能嵌入到 JavaScript 字符串中
-        if let jsonString = String(data: jsonData, encoding: .utf8),
-           jsonString.hasPrefix("\""),
-           jsonString.hasSuffix("\"") {
-            let startIndex = jsonString.index(jsonString.startIndex, offsetBy: 1)
-            let endIndex = jsonString.index(jsonString.endIndex, offsetBy: -1)
-            return String(jsonString[startIndex..<endIndex])
-        }
-        // 如果格式不符合预期，回退到手动转义
-        return escapeJavaScriptStringManual(string)
-    } catch {
-        // 编码失败时回退到手动转义方案
-        print("⚠️ JSONEncoder 编码失败，使用手动转义: \(error)")
-        return escapeJavaScriptStringManual(string)
+    // 使用 JSONEncoder 编码字符串
+    struct StringArray: Codable {
+        let value: String
     }
-}
-
-// 手动转义（作为 fallback，或在性能敏感场景使用）
-private func escapeJavaScriptStringManual(_ string: String) -> String {
-    var result = ""
-    result.reserveCapacity(string.count * 2) // 预分配空间，减少内存分配
     
-    for char in string {
-        switch char {
-        case "\\": result += "\\\\"
-        case "'": result += "\\'"
-        case "\"": result += "\\\""
-        case "\n": result += "\\n"
-        case "\r": result += "\\r"
-        case "\t": result += "\\t"
-        case "\u{2028}": result += "\\u2028"  // 行分隔符
-        case "\u{2029}": result += "\\u2029"  // 段落分隔符
-        default:
-            // 处理控制字符
-            if char.isASCII && char.unicodeScalars.first?.value ?? 0 < 32 {
-                result += String(format: "\\u%04x", char.unicodeScalars.first?.value ?? 0)
-            } else {
-                result.append(char)
+    let wrapper = StringArray(value: string)
+    let jsonEncoder = JSONEncoder()
+    
+    guard let jsonData = try? jsonEncoder.encode(wrapper),
+          let jsonString = String(data: jsonData, encoding: .utf8) else {
+        // 如果编码失败，使用 JSONSerialization 作为备用方案
+        return escapeJavaScriptStringWithJSONSerialization(string)
+    }
+    
+    // 提取 value 字段的值部分（去掉首尾的双引号）
+    // 格式: {"value":"escaped_content"}
+    if let prefixRange = jsonString.range(of: "\"value\":\""),
+       prefixRange.upperBound < jsonString.endIndex {
+        let valueStartIndex = prefixRange.upperBound
+        // 从 valueStartIndex 开始查找第一个未转义的双引号
+        var searchIndex = valueStartIndex
+        var escaped = false
+        var foundEnd = false
+        
+        while searchIndex < jsonString.endIndex {
+            let char = jsonString[searchIndex]
+            if escaped {
+                escaped = false
+            } else if char == "\\" {
+                escaped = true
+            } else if char == "\"" {
+                foundEnd = true
+                break
             }
+            searchIndex = jsonString.index(after: searchIndex)
+        }
+        
+        if foundEnd && searchIndex > valueStartIndex {
+            let escapedValue = String(jsonString[valueStartIndex..<searchIndex])
+            return escapedValue
         }
     }
-    return result
+    
+    // 如果解析失败，使用备用方案
+    return escapeJavaScriptStringWithJSONSerialization(string)
 }
 ```
+
+**优势**：
+- ✅ 正确处理所有 Unicode 字符（包括 emoji、特殊符号）
+- ✅ 正确处理 Base64 图片 URL 中的特殊字符（`;`, `:`, `,` 等）
+- ✅ 类型安全：使用 Codable 协议
+- ✅ 有备用方案：JSONSerialization 作为降级策略
 
 ### 1.3 频繁的 JavaScript 桥接调用
 
@@ -580,159 +476,52 @@ struct ContentUpdateMessage: AITextViewMessage {
 ### 4.1 自动滚动可能打断用户
 
 **当前问题**：
-```220:222:AITextView/Sources/AITextView.swift
+```226:228:AITextView/Sources/AITextView.swift
         if isAutoScrollEnabled && !markdown.isEmpty {
             scrollToBottom(animated: true)
         }
 ```
 
 - 用户正在查看上方内容时，被强制滚动到底部
-- 无法感知是否有新内容到达
-- 滚动阈值硬编码，不够灵活
 
-**改进方案**：智能滚动 + 新内容提示
+**改进方案**：智能滚动 ✅ 已实现
+
 ```swift
-class AITextView: UIView {
-    // 可配置的滚动阈值（距离底部多少像素时触发自动滚动）
-    @objc public var autoScrollThreshold: CGFloat = 100.0
+func scrollToBottom(animated: Bool = true) {
+    let scrollView = webView.scrollView
+    let contentHeight = scrollView.contentSize.height
+    let viewHeight = scrollView.bounds.height
+    let currentOffset = scrollView.contentOffset.y
     
-    // 新内容提示视图
-    private var newContentIndicator: UIView?
-    private var newContentCount: Int = 0
+    // 计算距离底部的距离
+    let distanceFromBottom = contentHeight - currentOffset - viewHeight
     
-    /// 智能滚动到底部（仅在用户接近底部时滚动）
-    func scrollToBottom(animated: Bool = true) {
-        guard isAutoScrollEnabled else { return }
-        
-        let scrollView = webView.scrollView
-        let contentHeight = scrollView.contentSize.height
-        let viewHeight = scrollView.bounds.height
-        let currentOffset = scrollView.contentOffset.y
-        
-        // 计算距离底部的距离
-        let distanceFromBottom = contentHeight - currentOffset - viewHeight
-        
-        // 如果用户已经滚动到接近底部，才自动滚动
-        if distanceFromBottom <= autoScrollThreshold {
-            // 执行滚动
-            let jsCode = """
-            (function() {
-                window.scrollTo({
-                    top: document.body.scrollHeight,
-                    behavior: '\(animated ? "smooth" : "auto")'
-                });
-            })();
-            """
-            runJS(jsCode)
-            
-            // 滚动时隐藏新内容提示
-            hideNewContentIndicator()
-        } else {
-            // 用户正在查看上方内容，不自动滚动
-            // 显示新内容提示
-            incrementNewContentIndicator()
-        }
-    }
-    
-    /// 显示/更新新内容提示
-    private func incrementNewContentIndicator() {
-        newContentCount += 1
-        
-        // 延迟显示，避免频繁更新 UI
-        NSObject.cancelPreviousPerformRequests(
-            withTarget: self,
-            selector: #selector(showNewContentIndicator),
-            object: nil
-        )
-        perform(#selector(showNewContentIndicator), with: nil, afterDelay: 0.3)
-    }
-    
-    @objc private func showNewContentIndicator() {
-        guard newContentCount > 0 else { return }
-        
-        // 创建或更新提示视图
-        if newContentIndicator == nil {
-            let indicator = UIView()
-            indicator.backgroundColor = .systemBlue
-            indicator.layer.cornerRadius = 16
-            indicator.translatesAutoresizingMaskIntoConstraints = false
-            
-            let label = UILabel()
-            label.text = "新内容"
-            label.textColor = .white
-            label.font = .systemFont(ofSize: 14, weight: .medium)
-            label.translatesAutoresizingMaskIntoConstraints = false
-            indicator.addSubview(label)
-            
-            NSLayoutConstraint.activate([
-                label.centerXAnchor.constraint(equalTo: indicator.centerXAnchor),
-                label.centerYAnchor.constraint(equalTo: indicator.centerYAnchor),
-                label.leadingAnchor.constraint(equalTo: indicator.leadingAnchor, constant: 12),
-                label.trailingAnchor.constraint(equalTo: indicator.trailingAnchor, constant: -12),
-                indicator.heightAnchor.constraint(equalToConstant: 32)
-            ])
-            
-            addSubview(indicator)
-            NSLayoutConstraint.activate([
-                indicator.centerXAnchor.constraint(equalTo: centerXAnchor),
-                indicator.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -20)
-            ])
-            
-            newContentIndicator = indicator
-            indicator.alpha = 0
-            indicator.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-        }
-        
-        // 更新计数显示
-        if let label = newContentIndicator?.subviews.first as? UILabel {
-            if newContentCount > 1 {
-                label.text = "\(newContentCount) 条新内容"
-            } else {
-                label.text = "新内容"
+    // 如果用户已经滚动到接近底部（距离底部 < 100pt），才自动滚动
+    let threshold: CGFloat = 100.0
+    if distanceFromBottom < threshold {
+        // 执行滚动
+        let jsCode = "RE.scrollToBottom();"
+        runJS(jsCode) { result, error in
+            if let error = error {
+                // 备用方案：使用原生滚动
+                DispatchQueue.main.async {
+                    let maxOffsetY = max(0, scrollView.contentSize.height - scrollView.bounds.height)
+                    scrollView.setContentOffset(CGPoint(x: 0, y: maxOffsetY), animated: animated)
+                }
             }
         }
-        
-        // 动画显示
-        UIView.animate(withDuration: 0.3, delay: 0, options: [.curveEaseOut], animations: {
-            self.newContentIndicator?.alpha = 1.0
-            self.newContentIndicator?.transform = .identity
-        })
-        
-        // 添加点击手势，点击时滚动到底部
-        if newContentIndicator?.gestureRecognizers?.isEmpty ?? true {
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(onNewContentIndicatorTapped))
-            newContentIndicator?.addGestureRecognizer(tapGesture)
-            newContentIndicator?.isUserInteractionEnabled = true
-        }
-    }
-    
-    @objc private func onNewContentIndicatorTapped() {
-        // 强制滚动到底部
-        let jsCode = """
-        (function() {
-            window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: 'smooth'
-            });
-        })();
-        """
-        runJS(jsCode)
-        hideNewContentIndicator()
-    }
-    
-    /// 隐藏新内容提示
-    private func hideNewContentIndicator() {
-        guard let indicator = newContentIndicator, indicator.alpha > 0 else { return }
-        
-        UIView.animate(withDuration: 0.2, animations: {
-            indicator.alpha = 0
-            indicator.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
-        }) { _ in
-            self.newContentCount = 0
-        }
+    } else {
+        // 用户正在查看上方内容，不自动滚动
+        // TODO: 可以显示一个"新内容"提示
     }
 }
 ```
+
+**优势**：
+- ✅ 已实现：智能判断用户是否在底部附近
+- ✅ 避免打断用户阅读：如果用户正在查看上方内容，不会强制滚动
+- ✅ 有备用方案：JavaScript 滚动失败时使用原生滚动
+- ⚠️ 待实现：新内容提示功能（显示一个小气泡提示有新内容）
 
 ### 4.2 缺少滚动位置记忆
 

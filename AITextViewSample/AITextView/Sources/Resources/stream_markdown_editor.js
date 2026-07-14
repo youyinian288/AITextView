@@ -99,8 +99,7 @@ RE.streamMarkdownProcessor = {
         }
     },
     
-    updateMarkdown(newContent, isComplete) {
-        RE.callback('debug/updateMarkdown被调用:长度=' + newContent.length + ',完成=' + isComplete);
+    updateMarkdown(newContent, isComplete) {        RE.callback('debug/updateMarkdown被调用:长度=' + newContent.length + ',完成=' + isComplete);
         RE.callback('debug/更新Markdown:长度=' + newContent.length + ',完成=' + isComplete + ',编辑器=' + (!!RE.editor) + ',parser=' + (!!this.parser) + ',renderer=' + (!!this.renderer));
         
         if (!RE.editor) {
@@ -216,7 +215,6 @@ RE.streamMarkdownProcessor = {
     }
 };
 
-// API 方法，模仿 RichEditorView
 RE.setMarkdown = function(content) {
     RE.streamMarkdownProcessor.reset();
     RE.streamMarkdownProcessor.updateMarkdown(content, true);
@@ -226,9 +224,7 @@ RE.getMarkdown = function() {
     return RE.streamMarkdownProcessor.currentContent;
 };
 
-RE.getHtml = function() {
-    return RE.editor.innerHTML;
-};
+
 
 RE.clear = function() {
     RE.streamMarkdownProcessor.reset();
